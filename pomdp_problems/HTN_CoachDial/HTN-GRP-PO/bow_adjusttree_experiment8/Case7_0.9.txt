@@ -1,0 +1,8 @@
+
+========================
+Notif: turn_on_faucet_1	0.4054	0.3574	0.3213	0.3213	{u'use_soap': 0.3574, u'add_water_kettle_1': 0.6426}	3
+Notif: turn_on_faucet_1	1	0.3574	0.3213	0.3213	{u'use_soap': 0.3574, u'add_water_kettle_1': 0.6426}	3
+Notif: use_soap	0.5754	0.743	0.1504	0.2871	{u'turn_off_faucet_1': 0.2132, u'rinse_hand': 0.6063, u'use_soap': 0.1367, u'add_water_kettle_1': 0.1805}	7
+Notif: use_soap	1	0.743	0.1504	0.2871	{u'turn_off_faucet_1': 0.2132, u'rinse_hand': 0.6063, u'use_soap': 0.1367, u'add_water_kettle_1': 0.1805}	7
+Notif: turn_off_faucet_1	0.939	0.743	0.1504	0.2871	{u'turn_off_faucet_1': 0.2132, u'rinse_hand': 0.6063, u'use_soap': 0.1367, u'add_water_kettle_1': 0.1805}	7
+Notif: turn_off_faucet_1	1	

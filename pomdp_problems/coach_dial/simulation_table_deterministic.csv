@@ -1,0 +1,6 @@
+i,u,w,actv,a,i',u',w',actv'
+1,"saying-nothing","0000","doing-nothing","give-next-instruction",1,"saying-nothing","0000","putting-saucepan-on-stove"
+1,"saying-nothing","0000","putting-saucepan-on-stove","wait",1,"saying-nothing","0001","putting-saucepan-on-stove"
+1,"saying-nothing","0001","putting-saucepan-on-stove","wait",1,"saying-nothing","0001","doing-nothing"
+1,"saying-nothing","0001","doing-nothing","wait",2,"saying-nothing","0001","doing-nothing"
+2,"saying-nothing","0001","doing-nothing","bye",2,"saying-nothing","0001","doing-nothing"

@@ -1,0 +1,4 @@
+i,u,w,actv,is_terminal,a,i',u',w',actv',Total Reward, Discounted Rewards
+(s,a,s'), (s',a',s'')
+(1,"saying-nothing","0000","doing-nothing", False,"bye", 1,"saying-nothing","0000","doing-nothing", True),(1,"saying-nothing","0000","doing-nothing", True, "bye, 1,"saying-nothing","0000","doing-nothing", True)) 
+1,"saying-nothing","0000","doing-nothing", False, "give_next_instruction, 1,"saying-nothing","0000","doing-nothing"1,"saying-nothing","0000","doing-nothing"), 1,"saying-nothing","0000","doing-nothing"1,"saying-nothing","0000","doing-nothing", 1,"saying-nothing","0000","doing-nothing"1,"saying-nothing","0000","doing-nothing"

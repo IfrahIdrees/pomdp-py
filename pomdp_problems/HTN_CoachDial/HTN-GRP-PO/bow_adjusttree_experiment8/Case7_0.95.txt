@@ -1,0 +1,21 @@
+
+========================
+Notif: turn_on_faucet_1	0.3727	0.3574	0.3213	0.3213	{u'use_soap': 0.3574, u'add_water_kettle_1': 0.6426}	3
+Notif: turn_on_faucet_1	1	0.3574	0.3213	0.3213	{u'use_soap': 0.3574, u'add_water_kettle_1': 0.6426}	3
+Notif: use_soap	0.6092	0.8542	0.0804	0.1613	{u'turn_off_faucet_1': 0.1307, u'rinse_hand': 0.7734, u'use_soap': 0.0808, u'add_water_kettle_1': 0.0959}	7
+Notif: use_soap	1	0.8542	0.0804	0.1613	{u'turn_off_faucet_1': 0.1307, u'rinse_hand': 0.7734, u'use_soap': 0.0808, u'add_water_kettle_1': 0.0959}	7
+Notif: turn_off_faucet_1	0.8637	0.8542	0.0804	0.1613	{u'turn_on_faucet_1': 1.0}	7
+Notif: turn_off_faucet_1	1	0.8542	0.0804	0.1613	{u'turn_on_faucet_1': 1.0}	7
+Notif: turn_on_faucet_1	-0.576	0.8561	0.4791	0.4781	{u'turn_on_faucet_1': 0.0857, u'use_soap': 0.82, u'add_water_kettle_1': 0.5892}	21
+Notif: turn_on_faucet_1	1	0.8561	0.4791	0.4781	{u'turn_on_faucet_1': 0.0857, u'use_soap': 0.82, u'add_water_kettle_1': 0.5892}	21
+Notif: use_soap	0.5301	1.0	0.1044	0.1839	{u'turn_off_faucet_1': 0.0489, u'turn_on_faucet_1': 0.0795, u'rinse_hand': 0.84, u'use_soap': 0.16, u'add_water_kettle_1': 0.16}	31
+Notif: use_soap	1	1.0	0.1044	0.1839	{u'turn_off_faucet_1': 0.0489, u'turn_on_faucet_1': 0.0795, u'rinse_hand': 0.84, u'use_soap': 0.16, u'add_water_kettle_1': 0.16}	31
+Notif: rinse_hand	0.1931	1.0	0.0	0.0946	{u'turn_on_faucet_1': 0.0946, u'dry_hand': 1.0, u'turn_off_faucet_1': 1.0}	3
+Notif: rinse_hand	1	1.0	0.0	0.0946	{u'turn_on_faucet_1': 0.0946, u'dry_hand': 1.0, u'turn_off_faucet_1': 1.0}	3
+Notif: turn_off_faucet_1	0.5159	1.0	0.0	0.0946	{u'turn_on_faucet_1': 0.0946, u'dry_hand': 0.9504, u'turn_off_faucet_1': 0.0496}	6
+Notif: turn_off_faucet_1	1	1.0	0.0	0.0946	{u'turn_on_faucet_1': 0.0946, u'dry_hand': 0.9504, u'turn_off_faucet_1': 0.0496}	6
+Notif: dry_hand	0.1197	0.18	0.0885	0.1692	{u'turn_on_faucet_1': 0.0776, u'dry_hand': 0.18, u'add_water_kettle_1': 0.18}	11
+Notif: dry_hand	1	0.18	0.0885	0.1692	{u'turn_on_faucet_1': 0.0776, u'dry_hand': 0.18, u'add_water_kettle_1': 0.18}	11
+
+========================
+Notif: turn_on_faucet_1	0.3727	

@@ -44,6 +44,7 @@ import sys
 class TigerState(pomdp_py.State):
     def __init__(self, name):
         self.name = name
+        # self.exp = exp 
     def __hash__(self):
         return hash(self.name)
     def __eq__(self, other):
@@ -278,26 +279,26 @@ def main():
     # # Reset agent belief
     # tiger_problem.agent.set_belief(init_belief, prior=True)
 
-    # print("\n** Testing POUCT **")
-    # pouct = pomdp_py.POUCT(max_depth=3, discount_factor=0.95,
-    #                        num_sims=4096, exploration_const=50,
-    #                        rollout_policy=tiger_problem.agent.policy_model,
-    #                        show_progress=True)
-    # test_planner(tiger_problem, pouct, nsteps=10, debug_tree=False)
-    # TreeDebugger(tiger_problem.agent.tree).pp
+    print("\n** Testing POUCT **")
+    pouct = pomdp_py.POUCT(max_depth=3, discount_factor=0.95,
+                           num_sims=4096, exploration_const=50,
+                           rollout_policy=tiger_problem.agent.policy_model,
+                           show_progress=True)
+    test_planner(tiger_problem, pouct, nsteps=10, debug_tree=False)
+    TreeDebugger(tiger_problem.agent.tree).pp
 
     # Reset agent belief
-    tiger_problem.agent.set_belief(init_belief, prior=True)
-    tiger_problem.agent.tree = None
+    # tiger_problem.agent.set_belief(init_belief, prior=True)
+    # tiger_problem.agent.tree = None
 
-    print("** Testing POMCP **")
-    tiger_problem.agent.set_belief(pomdp_py.Particles.from_histogram(init_belief, num_particles=100), prior=True)
-    pomcp = pomdp_py.POMCP(max_depth=3, discount_factor=0.95,
-                           num_sims=1000, exploration_const=50,
-                           rollout_policy=tiger_problem.agent.policy_model,
-                           show_progress=True, pbar_update_interval=500)
-    test_planner(tiger_problem, pomcp, nsteps=10)
-    TreeDebugger(tiger_problem.agent.tree).pp
+    # print("** Testing POMCP **")
+    # tiger_problem.agent.set_belief(pomdp_py.Particles.from_histogram(init_belief, num_particles=100), prior=True)
+    # pomcp = pomdp_py.POMCP(max_depth=3, discount_factor=0.95,
+    #                        num_sims=1000, exploration_const=50,
+    #                        rollout_policy=tiger_problem.agent.policy_model,
+    #                        show_progress=True, pbar_update_interval=500)
+    # test_planner(tiger_problem, pomcp, nsteps=10)
+    # TreeDebugger(tiger_problem.agent.tree).pp
 
 if __name__ == '__main__':
     main()

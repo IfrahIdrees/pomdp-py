@@ -1,0 +1,12 @@
+
+========================
+Notif: turn_on_faucet_1	0.3465	0.3574	0.3213	0.3213	{u'use_soap': 0.3574, u'add_water_kettle_1': 0.6426}	
+========================
+Notif: turn_on_faucet_1	0.3465	0.3574	0.3213	0.3213	{u'use_soap': 0.3574, u'add_water_kettle_1': 0.6426}	3
+Notif: turn_on_faucet_1	1	
+========================
+Notif: turn_on_faucet_1	0.3465	
+========================
+Notif: turn_on_faucet_1	0.3465	
+========================
+Notif: turn_on_faucet_1	0.3465	

@@ -1,0 +1,14 @@
+477c477
+<             # logger.info("TIMESTEP IS %s", str(TIME_STEP))
+---
+>             logger.info("TIMESTEP IS %s", str(TIME_STEP))
+633d632
+< 
+845,847d843
+< 
+<             # if coachdial.env.state.instruction_step > MAX_INSTRUCTION_STEP:
+<             #     action = AgentByeAction()
+855,857d850
+<             # if isinstance(action, AgentByeAction):
+<             #     true_next_state.is_terminal = True
+<             # else:    
