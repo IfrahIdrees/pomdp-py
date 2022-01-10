@@ -28,7 +28,7 @@ Rewards:
     -1 for listening.
 Observations: You can hear either "tiger-left", or "tiger-right".
 
-Note that in this example, the TigerProblem is a POMDP that
+Note that in this example, the HTNCoachDial is a POMDP that
 also contains the agent and the environment as its fields. In
 general this doesn't need to be the case. (Refer to more complicated
 examples.)
@@ -40,40 +40,117 @@ from pomdp_py.utils import TreeDebugger
 import random
 import numpy as np
 import sys
+from human_simulator import *
+# from ExplaSet import *
+# class TigerState(pomdp_py.State):
+#     def __init__(self, name):
+#         self.name = name
+#         # self.exp = exp 
+#     def __hash__(self):
+#         return hash(self.name)
+#     def __eq__(self, other):
+#         if isinstance(other, TigerState):
+#             return self.name == other.name
+#         return False
+#     def __str__(self):
+#         return self.name
+#     def __repr__(self):
+#         return "TigerState(%s)" % self.name
+#     def other(self):
+#         if self.name.endswith("left"):
+#             return TigerState("tiger-right")
+#         else:
+#             return TigerState("tiger-left")
 
-class TigerState(pomdp_py.State):
-    def __init__(self, name):
-        self.name = name
-        # self.exp = exp 
+class HTNCoachDialState(pomdp_py.State):
+    # TODO:check this?
+    def __init__(self, world_state, exp): 
+        self.world_state = world_state
+        self.explaset = exp #use exp._prob and exp._action_posterior
     def __hash__(self):
-        return hash(self.name)
-    def __eq__(self, other):
-        if isinstance(other, TigerState):
-            return self.name == other.name
-        return False
-    def __str__(self):
-        return self.name
-    def __repr__(self):
-        return "TigerState(%s)" % self.name
-    def other(self):
-        if self.name.endswith("left"):
-            return TigerState("tiger-right")
+        return hash(self.world, self.exp)
+    def __eq__(self,other):
+        if isinstance(self,State):
+             ## TODO:check that object is same
+            return self.world_state == other.world_state\
+                and list(self._explaset) == list(other._explaset)\
+                and all([expla1._prob == expla2._prob for expla1, expla2 in zip(self._explaset, other._explaset)])\
+                and all([expla1._start_task == expla2._start_task for expla1, expla2 in zip(self._explaset, other._explaset)])\
+                and self._explaset._action_posterior_prob == other.exp._action_posterior_prob\
+                and self._explaset._prior == other.explaset._prior\
+                and self._explaset._otherHappen == other._explaset._otherHappen\
+        # and self.exp == self.exp\ 
+        # self._non_happen = non_happen
+        # self._sensor_notification = []
+        # self._output_file_name = output_file_name
+        #  = {}
+        # self._language_notification = []
+        # self.highest_action_PS = []
+        # self._forest = forest
+        # self._pendingSet = pendingSet
+        # self._start_task = start_task
         else:
-            return TigerState("tiger-left")
+            return False
+    def __str__(self):
+        return self.__repr__()
 
-class TigerAction(pomdp_py.Action):
+    def __repr__(self):
+        return "State(%s | %s | %s | %s | %s | %s)" % (str(self.world_state), str(self.explaset.__dict__))
+    
+
+class Action(pomdp_py.Action):
     def __init__(self, name):
         self.name = name
     def __hash__(self):
         return hash(self.name)
     def __eq__(self, other):
-        if isinstance(other, TigerAction):
+        if isinstance(other, Action):
             return self.name == other.name
-        return False
+        elif type(other) == str:
+            return self.name == other
     def __str__(self):
         return self.name
     def __repr__(self):
-        return "TigerAction(%s)" % self.name
+        return "Action(%s)" % self.name
+    
+# class TigerAction(pomdp_py.Action):
+#     def __init__(self, name):
+#         self.name = name
+#     def __hash__(self):
+#         return hash(self.name)
+#     def __eq__(self, other):
+#         if isinstance(other, TigerAction):
+#             return self.name == other.name
+#         return False
+#     def __str__(self):
+#         return self.name
+#     def __repr__(self):
+#         return "TigerAction(%s)" % self.name
+# class AgentGiveNextInstructionAction(Action):
+#     """
+#     Robot action for giving the next instruction
+#     """
+#     ##@II need to code that it increases instruction by 1. As in MoveAction East is (1,0) (just defining)
+
+#     def __init__(self):
+#         super().__init__("give-next-instruction")
+
+# class AgentAskClarificationQuestion(Action):
+#     """
+#     Robot action for giving the next instruction
+#     """
+#     ##@II need to code that it increases instruction by 1. As in MoveAction East is (1,0) (just defining)
+
+#     def __init__(self):
+#         super().__init__("ask-clarification-question")
+
+# class AgentWaitAction(Action):
+#     """
+#     Robot action for waiting for user's utterances.
+#     """
+#     def __init__(self):
+#         super().__init__("wait")
+
 
 class TigerObservation(pomdp_py.Observation):
     def __init__(self, name):
@@ -120,6 +197,10 @@ class ObservationModel(pomdp_py.ObservationModel):
         return [TigerObservation(s) for s in {"tiger-left", "tiger-right"}]
 
 # Transition Model
+# class TransitionModel(pomdp_py.TransitionModel):
+#     def __init__(self):
+#         # human_simulator = human_simulator()
+
 class TransitionModel(pomdp_py.TransitionModel):
     def probability(self, next_state, state, action):
         """According to problem spec, the world resets once
@@ -171,7 +252,7 @@ class PolicyModel(pomdp_py.RandomRollout):
     with the framework."""
     # A stay action can be added to test that POMDP solver is
     # able to differentiate information gathering actions.
-    ACTIONS = {TigerAction(s) for s in {"open-left", "open-right", "listen"}}
+    ACTIONS = {Action(s) for s in {"give-next-instruction","ask-clarification-question", "wait"}}
 
     def sample(self, state, **kwargs):
         return random.sample(self.get_all_actions(), 1)[0]
@@ -180,24 +261,31 @@ class PolicyModel(pomdp_py.RandomRollout):
         return PolicyModel.ACTIONS
 
 
-class TigerProblem(pomdp_py.POMDP):
+def convert_object_belief_to_histogram(init_belief):
+    '''Convert belief object to histogram dictionary'''
+    # TODO:Tian
+    pass
+
+
+class HTNCoachDial(pomdp_py.POMDP):
     """
-    In fact, creating a TigerProblem class is entirely optional
+    In fact, creating a HTNCoachDial class is entirely optional
     to simulate and solve POMDPs. But this is just an example
     of how such a class can be created.
     """
 
-    def __init__(self, obs_noise, init_true_state, init_belief):
+    def __init__(self, obs_noise, init_belief):
         """init_belief is a Distribution."""
         agent = pomdp_py.Agent(init_belief,
                                PolicyModel(),
                                TransitionModel(),
                                ObservationModel(obs_noise),
                                RewardModel())
-        env = pomdp_py.Environment(init_true_state,
-                                   TransitionModel(),
-                                   RewardModel())
-        super().__init__(agent, env, name="TigerProblem")
+        # env = pomdp_py.Environment(init_true_state,
+        #                            TransitionModel(),
+        #                            RewardModel())
+        env = None
+        super().__init__(agent, env, name="HTNCoachDial") ## ask kaiyu
 
     @staticmethod
     def create(state="tiger-left", belief=0.5, obs_noise=0.15):
@@ -210,7 +298,7 @@ class TigerProblem(pomdp_py.POMDP):
         init_true_state = TigerState(state)
         init_belief = pomdp_py.Histogram({TigerState("tiger-left"): belief,
                                           TigerState("tiger-right"): 1.0 - belief})
-        tiger_problem = TigerProblem(obs_noise,  # observation noise
+        tiger_problem = HTNCoachDial(obs_noise,  # observation noise
                                      init_true_state, init_belief)
         tiger_problem.agent.set_belief(init_belief, prior=True)
         return tiger_problem
@@ -223,10 +311,14 @@ def test_planner(tiger_problem, planner, nsteps=3, debug_tree=False):
     Runs the action-feedback loop of Tiger problem POMDP
 
     Args:
-        tiger_problem (TigerProblem): an instance of the tiger problem.
+        tiger_problem (HTNCoachDial): an instance of the tiger problem.
         planner (Planner): a planner
         nsteps (int): Maximum number of steps to run this loop.
     """
+    gamma = 1.0
+    total_reward = 0
+    total_discounted_reward = 0
+    human_simulator = human_simulator()
     for i in range(nsteps):
         action = planner.plan(tiger_problem.agent)
         if debug_tree:
@@ -235,7 +327,13 @@ def test_planner(tiger_problem, planner, nsteps=3, debug_tree=False):
             import pdb; pdb.set_trace()
 
         print("==== Step %d ====" % (i+1))
-        print("True state: %s" % tiger_problem.env.state)
+        ## true state, get from simulator
+        if i == 0:
+            curr_step = human_simulator.curr_step("End")
+        else:
+            curr_step = human_simulator.curr_step(curr_step)
+        print("True state: %s" % curr_step)
+        # print("True state: %s" % tiger_problem.env.state)
         print("Belief: %s" % str(tiger_problem.agent.cur_belief))
         print("Action: %s" % str(action))
         print("Reward: %s" % str(tiger_problem.env.reward_model.sample(tiger_problem.env.state, action, None)))
@@ -269,7 +367,7 @@ def main():
                                      TigerState("tiger-right")])
     init_belief = pomdp_py.Histogram({TigerState("tiger-left"): 0.5,
                                       TigerState("tiger-right"): 0.5})
-    tiger_problem = TigerProblem(0.15,  # observation noise
+    tiger_problem = HTNCoachDial(0.15,  # observation noise
                                  init_true_state, init_belief)
 
     # print("** Testing value iteration **")

@@ -22,7 +22,7 @@ sys.path.append(BASE_DIR)
 # sys.path.append(os.path.join(ROOT_DIR, 'utils'))
 
 client = MongoClient()
-db = client.smart_home2
+db = client.smart_home3
 
 
 if __name__ == '__main__':
@@ -88,21 +88,21 @@ if __name__ == '__main__':
                 sensor_command = ""
 
                 ##Some times those command do not work, add "--jsonArray" to the end of each command line
-                os.system("mongoimport --db smart_home2 --collection method --drop --file ../../../../KnowledgeBase/method.json")
-                os.system("mongoimport --db smart_home2 --collection state --drop --file ../../../../KnowledgeBase/state.json")
-                os.system("mongoimport --db smart_home2 --collection operator --drop --file ../../../../KnowledgeBase/operator.json")
-                os.system("mongoimport --db smart_home2 --collection Rstate --drop --file ../../../../KnowledgeBase/realState.json")
+                os.system("mongoimport --db smart_home3 --collection method --drop --file ../../../../KnowledgeBase/method.json")
+                os.system("mongoimport --db smart_home3 --collection state --drop --file ../../../../KnowledgeBase/state.json")
+                os.system("mongoimport --db smart_home3 --collection operator --drop --file ../../../../KnowledgeBase/operator.json")
+                os.system("mongoimport --db smart_home3 --collection Rstate --drop --file ../../../../KnowledgeBase/realState.json")
                 
                 ##command for sensor reliability set up
                 if x == None:
-                    sensor_command = "mongoimport --db smart_home2 --collection sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
+                    sensor_command = "mongoimport --db smart_home3 --collection sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
                 else:
-                    sensor_command = "mongoimport --db smart_home2 --collection sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor" + "_" + str(x) + ".json"
+                    sensor_command = "mongoimport --db smart_home3 --collection sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor" + "_" + str(x) + ".json"
                 os.system(sensor_command)
                 
                 ##command for sensor missing set up
                 '''
-                sensor_command = "mongoimport --db smart_home2 --collection sensor --drop --file ../KnowledgeBase/missing_sensor/sensor" + "_" + str(x) + ".json"
+                sensor_command = "mongoimport --db smart_home3 --collection sensor --drop --file ../KnowledgeBase/missing_sensor/sensor" + "_" + str(x) + ".json"
                 os.system(sensor_command)
                 '''
                 

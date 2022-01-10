@@ -20,7 +20,7 @@ import pymongo
 import random
 
 client = MongoClient()
-db = client.smart_home2
+db = client.smart_home3
 
 
 class DB_Object(object):
