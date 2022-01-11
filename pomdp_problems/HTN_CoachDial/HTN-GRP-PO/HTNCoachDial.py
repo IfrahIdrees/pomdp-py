@@ -65,23 +65,27 @@ from human_simulator import *
 class HTNCoachDialState(pomdp_py.State):
     # TODO:check this?
     def __init__(self, world_state, exp): 
-        self.world_state = world_state
-        self.explaset = exp #use exp._prob and exp._action_posterior
+        self._world_state = _world_state
+        self._explaset = exp #use exp._prob and exp._action_posterior
+        self._question_asked =  None
+        self._sensor_notification = None
     def __hash__(self):
-        return hash(self.world, self.exp)
+        return hash(self.world, self.exp, self._question_asked, self._sensor_notification)
     def __eq__(self,other):
         if isinstance(self,State):
              ## TODO:check that object is same
-            return self.world_state == other.world_state\
+            return self._world_state == other._world_state\
                 and list(self._explaset) == list(other._explaset)\
                 and all([expla1._prob == expla2._prob for expla1, expla2 in zip(self._explaset, other._explaset)])\
                 and all([expla1._start_task == expla2._start_task for expla1, expla2 in zip(self._explaset, other._explaset)])\
                 and self._explaset._action_posterior_prob == other.exp._action_posterior_prob\
-                and self._explaset._prior == other.explaset._prior\
+                and self._explaset._prior == other._explaset._prior\
                 and self._explaset._otherHappen == other._explaset._otherHappen\
+                and self._question_asked == other._question_asked\
+                and self._sensor_notification == other._sensor_notification
         # and self.exp == self.exp\ 
         # self._non_happen = non_happen
-        # self._sensor_notification = []
+        # self.__sensor_notification = []
         # self._output_file_name = output_file_name
         #  = {}
         # self._language_notification = []
@@ -95,7 +99,7 @@ class HTNCoachDialState(pomdp_py.State):
         return self.__repr__()
 
     def __repr__(self):
-        return "State(%s | %s | %s | %s | %s | %s)" % (str(self.world_state), str(self.explaset.__dict__))
+        return "State(%s | %s | %s | %s | %s | %s)" % (str(self._world_state), str(self._explaset.__dict__), self._question_asked, self._sensor_notification)
     
 
 class Action(pomdp_py.Action):
@@ -135,14 +139,27 @@ class Action(pomdp_py.Action):
 #     def __init__(self):
 #         super().__init__("give-next-instruction")
 
-# class AgentAskClarificationQuestion(Action):
-#     """
-#     Robot action for giving the next instruction
-#     """
-#     ##@II need to code that it increases instruction by 1. As in MoveAction East is (1,0) (just defining)
+# def
 
-#     def __init__(self):
-#         super().__init__("ask-clarification-question")
+class AgentAskClarificationQuestion(Action):
+    """
+    Robot action for giving the next instruction
+    """
+    ##@II need to code that it increases instruction by 1. As in MoveAction East is (1,0) (just defining)
+
+    def __init__(self):
+        super().__init__("ask-clarification-question")
+
+    def update_question_asked(state):
+        highest_action_PS = ["", float('-inf')]
+        for k, v in state._explaset._action_posterior_prob.items():
+            if v > highest_action_PS[1]:
+                highest_action_PS = [k,v]
+        #TODO: actual epxlaset not updated
+        # exp.highest_action_PS = highest_action_PS 
+
+        return highest_action_PS
+        # return state
 
 # class AgentWaitAction(Action):
 #     """
@@ -152,13 +169,16 @@ class Action(pomdp_py.Action):
 #         super().__init__("wait")
 
 
-class TigerObservation(pomdp_py.Observation):
+class Observation(pomdp_py.Observation):
     def __init__(self, name):
-        self.name = name
+        # self.name = name
+        self._world_state = {}
+        self._question_asked = None
+        self._explaset = None
     def __hash__(self):
         return hash(self.name)
     def __eq__(self, other):
-        if isinstance(other, TigerObservation):
+        if isinstance(other, Observation):
             return self.name == other.name
         return False
     def __str__(self):
@@ -197,54 +217,96 @@ class ObservationModel(pomdp_py.ObservationModel):
         return [TigerObservation(s) for s in {"tiger-left", "tiger-right"}]
 
 # Transition Model
-# class TransitionModel(pomdp_py.TransitionModel):
-#     def __init__(self):
-#         # human_simulator = human_simulator()
-
 class TransitionModel(pomdp_py.TransitionModel):
+    def __init__(self, hs):
+        self.human_simulator = hs
+
     def probability(self, next_state, state, action):
-        """According to problem spec, the world resets once
-        action is open-left/open-right. Otherwise, stays the same"""
-        if action.name.startswith("open"):
-            return 0.5
-        else:
-            if next_state.name == state.name:
-                return 1.0 - 1e-9
-            else:
-                return 1e-9
+        return hs.probablity(next_state, state)
 
     def sample(self, state, action):
-        if action.name.startswith("open"):
-            return random.choice(self.get_all_states())
+        next_state = HTNCoachDialState()
+        if action.name == "ask-clarification-question":
+            question_asked = action.update_question_asked(state)
         else:
-            return TigerState(state.name)
-
+            question_asked = None
+        next_state._question_asked = question_asked
+        next_state._sensor_notification = hs.curr_step(self, state, action)
+        return next_state
+        
     def get_all_states(self):
-        """Only need to implement this if you're using
-        a solver that needs to enumerate over the observation space (e.g. value iteration)"""
-        return [TigerState(s) for s in {"tiger-left", "tiger-right"}]
+        ##TODO: states are notifs or world states? need to convert notifs to states.
+        return hs.get_all_states()
+
+# class TransitionModel(pomdp_py.TransitionModel):
+    
+#     def probability(self, next_state, state, action):
+#         """According to problem spec, the world resets once
+#         action is open-left/open-right. Otherwise, stays the same"""
+#         if action.name.startswith("open"):
+#             return 0.5
+#         else:
+#             if next_state.name == state.name:
+#                 return 1.0 - 1e-9
+#             else:
+#                 return 1e-9
+
+#     def sample(self, state, action):
+#         if action.name.startswith("open"):
+#             return random.choice(self.get_all_states())
+#         else:
+#             return TigerState(state.name)
+
+#     def get_all_states(self):
+#         """Only need to implement this if you're using
+#         a solver that needs to enumerate over the observation space (e.g. value iteration)"""
+#         return [TigerState(s) for s in {"tiger-left", "tiger-right"}]
+
+
+class RewardModel(pomdp_py.RewardModel):
+    def __init__(self, hs):
+        self.human_simulator = hs
+    
+    # ACTIONS = {Action(s) for s in {"ask-clarification-question", "wait"}}
+
+    def sample(self, state, action, next_state, normalized=False, **kwargs):
+        if len(self.human_simulator.notifs[self.human_simulator.index_test_case]) == 0:
+            return 10
+        elif action.name == "wait":
+            return -1
+        elif action.name == "ask-clarification-question" and state._sensor_notification == state._question_asked:
+            return 5
+        else:
+            return -5 #-100s
+
+    def argmax(self, state, action, next_state, normalized=False, **kwargs):
+        raise NotImplementedError
+
+    def probability(self, reward, state, action, next_state, normalized=False, **kwargs):
+        raise NotImplementedError
 
 
 
 # Reward Model
-class RewardModel(pomdp_py.RewardModel):
-    def _reward_func(self, state, action):
-        if action.name == "open-left":
-            if state.name == "tiger-right":
-                return 10
-            else:
-                return -100
-        elif action.name == "open-right":
-            if state.name == "tiger-left":
-                return 10
-            else:
-                return -100
-        else: # listen
-            return -1
+# class RewardModel(pomdp_py.RewardModel):
+#     def _reward_func(self, state, action):
+#         # if action_name == 
+#         if action.name == "open-left":
+#             if state.name == "tiger-right":
+#                 return 10
+#             else:
+#                 return -100
+#         elif action.name == "open-right":
+#             if state.name == "tiger-left":
+#                 return 10
+#             else:
+#                 return -100
+#         else: # listen
+#             return -1
 
-    def sample(self, state, action, next_state):
-        # deterministic
-        return self._reward_func(state, action)
+#     def sample(self, state, action, next_state):
+#         # deterministic
+#         return self._reward_func(state, action)
 
 # Policy Model
 class PolicyModel(pomdp_py.RandomRollout):
@@ -252,7 +314,9 @@ class PolicyModel(pomdp_py.RandomRollout):
     with the framework."""
     # A stay action can be added to test that POMDP solver is
     # able to differentiate information gathering actions.
-    ACTIONS = {Action(s) for s in {"give-next-instruction","ask-clarification-question", "wait"}}
+    # ACTIONS = {Action(s) for s in {"ask-clarification-question", "wait"}}
+    ACTIONS = {Action("wait"), AgentAskClarificationQuestion }
+    # {Action(s) for s in {"ask-clarification-question", "wait"}}
 
     def sample(self, state, **kwargs):
         return random.sample(self.get_all_actions(), 1)[0]
@@ -260,11 +324,22 @@ class PolicyModel(pomdp_py.RandomRollout):
     def get_all_actions(self, **kwargs):
         return PolicyModel.ACTIONS
 
+    def probability(self, action, state, normalized=False, **kwargs):
+        raise NotImplementedError
+
+    def argmax(self, state, normalized=False, **kwargs):
+        """Returns the most likely reward"""
+        raise NotImplementedError
+
+
 
 def convert_object_belief_to_histogram(init_belief):
     '''Convert belief object to histogram dictionary'''
     # TODO:Tian
+    #input two lists
+    #output a big dict
     pass
+
 
 
 class HTNCoachDial(pomdp_py.POMDP):
@@ -276,11 +351,15 @@ class HTNCoachDial(pomdp_py.POMDP):
 
     def __init__(self, obs_noise, init_belief):
         """init_belief is a Distribution."""
+        
+        self.hs = human_simulator()
+        self.hs.goal_selection()
+
         agent = pomdp_py.Agent(init_belief,
                                PolicyModel(),
-                               TransitionModel(),
+                               TransitionModel(self.hs),
                                ObservationModel(obs_noise),
-                               RewardModel())
+                               RewardModel(self.hs))
         # env = pomdp_py.Environment(init_true_state,
         #                            TransitionModel(),
         #                            RewardModel())
@@ -298,65 +377,65 @@ class HTNCoachDial(pomdp_py.POMDP):
         init_true_state = TigerState(state)
         init_belief = pomdp_py.Histogram({TigerState("tiger-left"): belief,
                                           TigerState("tiger-right"): 1.0 - belief})
-        tiger_problem = HTNCoachDial(obs_noise,  # observation noise
+        HTNCoachDial_problem = HTNCoachDial(obs_noise,  # observation noise
                                      init_true_state, init_belief)
-        tiger_problem.agent.set_belief(init_belief, prior=True)
-        return tiger_problem
+        HTNCoachDial_problem.agent.set_belief(init_belief, prior=True)
+        return HTNCoachDial_problem
 
 
 
 
-def test_planner(tiger_problem, planner, nsteps=3, debug_tree=False):
+def test_planner(HTNCoachDial_problem, planner, nsteps=3, debug_tree=False):
     """
     Runs the action-feedback loop of Tiger problem POMDP
 
     Args:
-        tiger_problem (HTNCoachDial): an instance of the tiger problem.
+        HTNCoachDial_problem (HTNCoachDial): an instance of the tiger problem.
         planner (Planner): a planner
         nsteps (int): Maximum number of steps to run this loop.
     """
     gamma = 1.0
     total_reward = 0
     total_discounted_reward = 0
-    human_simulator = human_simulator()
+    print("Test Case Index is: %s" % HTNCoachDial_problem.hs.index_test_case)
     for i in range(nsteps):
-        action = planner.plan(tiger_problem.agent)
+        action = planner.plan(HTNCoachDial_problem.agent)
         if debug_tree:
             from pomdp_py.utils import TreeDebugger
-            dd = TreeDebugger(tiger_problem.agent.tree)
+            dd = TreeDebugger(HTNCoachDial_problem.agent.tree)
             import pdb; pdb.set_trace()
 
         print("==== Step %d ====" % (i+1))
         ## true state, get from simulator
         if i == 0:
-            curr_step = human_simulator.curr_step("End")
+            curr_step = HTNCoachDial_problem.hs.curr_step("none")
         else:
-            curr_step = human_simulator.curr_step(curr_step)
+            curr_step = HTNCoachDial_problem.hs.curr_step(curr_step)
         print("True state: %s" % curr_step)
-        # print("True state: %s" % tiger_problem.env.state)
-        print("Belief: %s" % str(tiger_problem.agent.cur_belief))
+        # print("True state: %s" % HTNCoachDial_problem.env.state)
+        print("Belief: %s" % str(HTNCoachDial_problem.agent.cur_belief))
         print("Action: %s" % str(action))
-        print("Reward: %s" % str(tiger_problem.env.reward_model.sample(tiger_problem.env.state, action, None)))
+        print("Reward: %s" % str(HTNCoachDial_problem.env.reward_model.sample(HTNCoachDial_problem.env.state, action, None)))
 
         # Let's create some simulated real observation; Update the belief
         # Creating true observation for sanity checking solver behavior.
         # In general, this observation should be sampled from agent's observation model.
-        real_observation = TigerObservation(tiger_problem.env.state.name)
+        real_observation = TigerObservation(HTNCoachDial_problem.env.state.name)
         print(">> Observation: %s" % real_observation)
-        tiger_problem.agent.update_history(action, real_observation)
+        HTNCoachDial_problem.agent.update_history(action, real_observation)
 
         # If the planner is POMCP, planner.update also updates agent belief.
-        planner.update(tiger_problem.agent, action, real_observation)
+        planner.update(HTNCoachDial_problem.agent, action, real_observation)
         if isinstance(planner, pomdp_py.POUCT):
             print("Num sims: %d" % planner.last_num_sims)
             print("Plan time: %.5f" % planner.last_planning_time)
 
-        if isinstance(tiger_problem.agent.cur_belief, pomdp_py.Histogram):
-            new_belief = pomdp_py.update_histogram_belief(tiger_problem.agent.cur_belief,
+        if isinstance(HTNCoachDial_problem.agent.cur_belief, pomdp_py.Histogram):
+            new_belief = pomdp_py.update_histogram_belief(HTNCoachDial_problem.agent.cur_belief,
                                                           action, real_observation,
-                                                          tiger_problem.agent.observation_model,
-                                                          tiger_problem.agent.transition_model)
-            tiger_problem.agent.set_belief(new_belief)
+                                                          HTNCoachDial_problem.agent.observation_model,
+                                                          HTNCoachDial_problem.agent.transition_model)
+            HTNCoachDial_problem.agent.set_belief(new_belief)
 
         if action.name.startswith("open"):
             # Make it clearer to see what actions are taken until every time door is opened.
@@ -367,36 +446,36 @@ def main():
                                      TigerState("tiger-right")])
     init_belief = pomdp_py.Histogram({TigerState("tiger-left"): 0.5,
                                       TigerState("tiger-right"): 0.5})
-    tiger_problem = HTNCoachDial(0.15,  # observation noise
+    HTNCoachDial_problem = HTNCoachDial(0.15,  # observation noise
                                  init_true_state, init_belief)
 
     # print("** Testing value iteration **")
     # vi = pomdp_py.ValueIteration(horizon=3, discount_factor=0.95)
-    # test_planner(tiger_problem, vi, nsteps=3)
+    # test_planner(HTNCoachDial_problem, vi, nsteps=3)
 
     # # Reset agent belief
-    # tiger_problem.agent.set_belief(init_belief, prior=True)
+    # HTNCoachDial_problem.agent.set_belief(init_belief, prior=True)
 
     print("\n** Testing POUCT **")
     pouct = pomdp_py.POUCT(max_depth=3, discount_factor=0.95,
                            num_sims=4096, exploration_const=50,
-                           rollout_policy=tiger_problem.agent.policy_model,
+                           rollout_policy=HTNCoachDial_problem.agent.policy_model,
                            show_progress=True)
-    test_planner(tiger_problem, pouct, nsteps=10, debug_tree=False)
-    TreeDebugger(tiger_problem.agent.tree).pp
+    test_planner(HTNCoachDial_problem, pouct, nsteps=10, debug_tree=False)
+    TreeDebugger(HTNCoachDial_problem.agent.tree).pp
 
     # Reset agent belief
-    # tiger_problem.agent.set_belief(init_belief, prior=True)
-    # tiger_problem.agent.tree = None
+    # HTNCoachDial_problem.agent.set_belief(init_belief, prior=True)
+    # HTNCoachDial_problem.agent.tree = None
 
     # print("** Testing POMCP **")
-    # tiger_problem.agent.set_belief(pomdp_py.Particles.from_histogram(init_belief, num_particles=100), prior=True)
+    # HTNCoachDial_problem.agent.set_belief(pomdp_py.Particles.from_histogram(init_belief, num_particles=100), prior=True)
     # pomcp = pomdp_py.POMCP(max_depth=3, discount_factor=0.95,
     #                        num_sims=1000, exploration_const=50,
-    #                        rollout_policy=tiger_problem.agent.policy_model,
+    #                        rollout_policy=HTNCoachDial_problem.agent.policy_model,
     #                        show_progress=True, pbar_update_interval=500)
-    # test_planner(tiger_problem, pomcp, nsteps=10)
-    # TreeDebugger(tiger_problem.agent.tree).pp
+    # test_planner(HTNCoachDial_problem, pomcp, nsteps=10)
+    # TreeDebugger(HTNCoachDial_problem.agent.tree).pp
 
 if __name__ == '__main__':
     main()

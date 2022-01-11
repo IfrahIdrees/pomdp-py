@@ -38,6 +38,24 @@ class Tracking_Engine(object):
         self._file_name = file_name
         self._output_file_name = output_file_name
 
+        ##Pomdp object instantiation
+        self.init_belief = type('test', (), {})()
+        self.init_belief.world_state = list(db._state.find())
+        self.init_belief.explaset = explaSet(cond_satisfy = self._cond_satisfy, cond_notsatisfy = self._cond_notsatisfy, delete_trigger = self._delete_trigger, non_happen = self._non_happen, output_file_name = self._output_file_name)
+        self.init_belief.explaset.explaInitialize() 
+        self.init_belief = convert_object_belief_to_histogram(self.init_belief)
+        self.HTNCoachDial_problem = HTNCoachDial(0.15,  # observation noise
+                                    self.init_belief)
+        self.HTNCoachDial_problem.agent.set_belief(self.init_belief, prior  = True)
+
+        print("\n** Testing POUCT **")
+        pouct = pomdp_py.POUCT(max_depth=3, discount_factor=0.95,
+                            num_sims=4096, exploration_const=50,
+                            rollout_policy=self.HTNCoachDial_problem.agent.policy_model,
+                            show_progress=True)
+        test_planner(self.HTNCoachDial_problem, pouct, nsteps=1, debug_tree=False)
+        TreeDebugger(self.HTNCoachDial_problem.agent.tree).pp
+
             
     def start(self):
         print
@@ -138,22 +156,7 @@ class Tracking_Engine(object):
                     # init_true_state.exp = explaSet(cond_satisfy = self._cond_satisfy, cond_notsatisfy = self._cond_notsatisfy, delete_trigger = self._delete_trigger, non_happen = self._non_happen, output_file_name = self._output_file_name)
                     # init_true_state.exp.explaInitialize() 
                     # init_true_state.state = list(db._Rstate.find()) 
-                    init_belief = type('test', (), {})()
-                    init_belief.world_state = list(db._state.find())
-                    init_belief.explaset = explaSet(cond_satisfy = self._cond_satisfy, cond_notsatisfy = self._cond_notsatisfy, delete_trigger = self._delete_trigger, non_happen = self._non_happen, output_file_name = self._output_file_name)
-                    init_belief.explaset.explaInitialize() 
-                    init_belief = convert_object_belief_to_histogram(init_belief)
-                    HTNCoachDial_problem = HTNCoachDial(0.15,  # observation noise
-                                                init_belief)
-                    HTNCoachDial_problem.agent.set_belief(init_belief, prior  = True)
-
-                    print("\n** Testing POUCT **")
-                    pouct = pomdp_py.POUCT(max_depth=3, discount_factor=0.95,
-                                        num_sims=4096, exploration_const=50,
-                                        rollout_policy=HTNCoachDial_problem.agent.policy_model,
-                                        show_progress=True)
-                    test_planner(HTNCoachDial_problem, pouct, nsteps=1, debug_tree=False)
-                    TreeDebugger(HTNCoachDial_problem.agent.tree).pp
+                    
                     # State().get_attr_in_effect(init_true_state.exp)
 
                 else: 
