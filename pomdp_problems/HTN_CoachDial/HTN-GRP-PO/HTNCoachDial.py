@@ -338,7 +338,31 @@ def convert_object_belief_to_histogram(init_belief):
     # TODO:Tian
     #input two lists
     #output a big dict
-    pass
+    from collections import defaultdict
+    print(init_belief.world_state)
+    obj_belief_dict = defaultdict(list)  # {obj_name: state_name: {state1: prob, ..}}
+    for obj in init_belief.world_state:
+        obj_name = obj["ob_name"]
+
+        for key, value in obj.items():
+            if key in ["_id", "ob_name", "ob_type"]:
+                # Ignore keys that are not an object state
+                continue
+
+            obj_state_dict = {}  # {ObjectState: state_prob}
+            for state, state_prob in value.items():
+                if state_prob == 1.0:
+                    # Skip a state when it only has one possible value.
+                    continue
+                #flat_dict[f"{obj_name}_{key}_{state}"] = state_prob
+                obj_state = pomdp_py.ObjectState(obj_name, {key: state})
+                obj_state_dict[obj_state] = state_prob
+
+            if obj_state_dict != {}:
+                obj_belief_dict[obj_name].append(obj_state_dict)
+
+    print(obj_belief_dict)
+    return obj_belief_dict
 
 
 
