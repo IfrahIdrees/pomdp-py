@@ -11,6 +11,7 @@ Research sponsored by AGEWELL Networks of Centers of Excellence (NCE).
 ####                        The control of an algorithm iteration                           ####
 ################################################################################################
 
+from collections import defaultdict
 import random
 import time
 from notification import *
@@ -39,15 +40,81 @@ class Tracking_Engine(object):
         self._output_file_name = output_file_name
 
         ##Pomdp object instantiation
-        self.init_belief = type('test', (), {})()
-        self.init_belief.world_state = list(db._state.find())
-        self.init_belief.explaset = explaSet(cond_satisfy = self._cond_satisfy, cond_notsatisfy = self._cond_notsatisfy, delete_trigger = self._delete_trigger, non_happen = self._non_happen, output_file_name = self._output_file_name)
-        self.init_belief.explaset.explaInitialize() 
-        self.init_belief = convert_object_belief_to_histogram(self.init_belief)
-        self.HTNCoachDial_problem = HTNCoachDial(0.15,  # observation noise
-                                    self.init_belief)
-        self.HTNCoachDial_problem.agent.set_belief(self.init_belief, prior  = True)
+        # self.init_belief = type('test', (), {})()
+        self.init_worldstate_belief = list(db._state.find())
+        self.explaset = explaSet(cond_satisfy = self._cond_satisfy, cond_notsatisfy = self._cond_notsatisfy, delete_trigger = self._delete_trigger, non_happen = self._non_happen, output_file_name = self._output_file_name)
+        self.explaset.explaInitialize() 
+        self.init_worldstate_belief, self.init_worldstate_state = convert_object_belief_to_histogram(self.init_worldstate_belief)
+        
+        title = "sensor_notif"
+        title = title.split("_")
 
+        init_sensor_state_val = ObjectAttrAndLangState(title[0], {title[1]: None})
+        self.init_sensor_state = {}
+        self.init_sensor_state["_".join(title)] = init_sensor_state_val
+        init_sensor_hist = {}
+        self.init_sensor_belief = defaultdict(pomdp_py.Histogram)
+        init_sensor_hist[init_sensor_state_val] = 1
+        self.init_sensor_belief["_".join(title)] = pomdp_py.Histogram(init_sensor_hist)
+
+        # self.init_sensor_state = ObjectAttrAndLangState("sensor", {"notif": None})
+        # self.init_explaset_state = ObjectAttrAndLangState("explaset", {"None":1} ) 
+        
+        self._step_dict = ['use_soap', 'rinse_hand', 'turn_on_faucet_1', 'turn_off_faucet_1', 'dry_hand', 'switch_on_kettle_1', 'switch_off_kettle_1', 'add_water_kettle_1', 'get_cup_1', 'open_tea_box_1', 'add_tea_cup_1', 'close_tea_box_1', 'add_water_cup_1', 'open_coffee_box_1', 'add_coffee_cup_1', 'close_coffee_box_1', 'drink']
+        self.init_explaset_hist = {}
+        self.init_explaset_belief = defaultdict(pomdp_py.Histogram)
+        
+        explaset_title = "explaset_action"
+        explaset_title = explaset_title.split("_")
+        init_explaset_state_val = ObjectAttrAndLangState(explaset_title[0], {explaset_title[1]:None})
+        self.init_explaset_state ={}
+        self.init_explaset_state["_".join(explaset_title)] = init_explaset_state_val
+        self.init_explaset_hist[init_explaset_state_val] = 1
+        
+        question_title = "language_indexQuestionAsked"
+        question_title = question_title.split("_")
+        init_question_asked_state_val = ObjectAttrAndLangState(question_title[0],{question_title[1]:None} ) 
+        self.init_question_asked_state ={}
+        self.init_question_asked_state["_".join(question_title)] =  init_question_asked_state_val
+        self.init_question_asked_hist = {}
+        self.init_question_asked_hist[init_question_asked_state_val] = 1
+        self.init_question_asked_belief =defaultdict(pomdp_py.Histogram)
+
+        for step in self._step_dict:
+            # obj_id = "action_"+ step
+            self.init_explaset_hist[ObjectAttrAndLangState(explaset_title[0], {explaset_title[1]:step})] = 0 
+            self.init_question_asked_hist[ObjectAttrAndLangState(question_title[0],{explaset_title[1]:step} )] = 0  
+        self.init_explaset_belief["_".join(explaset_title)] = pomdp_py.Histogram(self.init_explaset_hist)
+        self.init_question_asked_belief["_".join(question_title)] = pomdp_py.Histogram(self.init_question_asked_hist)
+        
+
+        feedback_title = "language_feedback"
+        feedback_title = feedback_title.split("_")
+        self.init_feedback_state ={}
+        init_feedback_state_val = ObjectAttrAndLangState(feedback_title[0],{feedback_title[1]:None} ) 
+        self.init_feedback_state["_".join(feedback_title)] =  init_feedback_state_val
+        
+        # self.init_feedback_state = ObjectAttrAndLangState("language", {"feedback":None})
+        self.init_feedback_hist = {}
+        self.init_feedback_belief = defaultdict(pomdp_py.Histogram)
+        self.init_feedback_hist[init_feedback_state_val] = 1
+        self.init_feedback_hist[ObjectAttrAndLangState("language", {"feedback":"yes"})] = 0 
+        self.init_feedback_hist[ObjectAttrAndLangState("language", {"feedback":"no"})] = 0 
+        self.init_feedback_belief["language_feedback"] = pomdp_py.Histogram(self.init_feedback_hist)
+        
+        
+        # max(self.explaset._action_posterior_prob, key=self.explaset._action_posterior_prob.get)
+        #  max(obj_state_dict, key=obj_state_dict.get)
+        #{objid: object_state}
+        self.init_state = HTNCoachDialState({**self.init_worldstate_state, **self.init_explaset_state, **self.init_sensor_state, **self.init_feedback_state, **self.init_question_asked_state})
+        
+        #{object_state:prob}
+        self.init_belief = HTNCoachDialBelief( {**self.init_worldstate_belief, **self.init_sensor_belief, **self.init_explaset_belief, **self.init_feedback_belief, **self.init_question_asked_belief})
+        self.init_belief.htn_explaset_action_posterior = self.explaset.action_posterior
+        self.HTNCoachDial_problem = HTNCoachDial(0.15,  # observation noise
+                                   self.init_belief)
+        # self.HTNCoachDial_problem.agent.set_belief(self.init_belief, prior  = True)
+        ##initial belief decides the state. Sample from the belief.
         print("\n** Testing POUCT **")
         pouct = pomdp_py.POUCT(max_depth=3, discount_factor=0.95,
                             num_sims=4096, exploration_const=50,

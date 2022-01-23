@@ -13,6 +13,9 @@ import argparse
 import time
 import random
 
+# import sys
+# sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
+
 class MosOOPOMDP(pomdp_py.OOPOMDP):
     """
     A MosOOPOMDP is instantiated given a string description
@@ -220,8 +223,9 @@ def solve(problem,
         _start = time.time()
         real_action = planner.plan(problem.agent)
         _time_used += time.time() - _start
-        if _time_used > max_time:
-            break  # no more time to update.
+        ##Check back
+        # if _time_used > max_time:
+        #     break  # no more time to update.
 
         # Execute action
         reward = problem.env.state_transition(real_action, execute=True,

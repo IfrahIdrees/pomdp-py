@@ -7,6 +7,11 @@
 #
 
 import pygame
+
+import sys
+print(sys.path)
+sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
+
 import cv2
 import math
 import numpy as np
@@ -17,6 +22,9 @@ from pomdp_problems.multi_object_search.domain.observation import *
 from pomdp_problems.multi_object_search.domain.action import *
 from pomdp_problems.multi_object_search.domain.state import *
 from pomdp_problems.multi_object_search.example_worlds import *
+
+# import sys
+
 
 # Deterministic way to get object color
 def object_color(objid, count):

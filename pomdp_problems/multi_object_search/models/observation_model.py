@@ -192,9 +192,11 @@ class ObjectObservationModel(pomdp_py.ObservationModel):
 
 ### Unit test ###
 def unittest():
-    from ..env.env import make_laser_sensor,\
-        make_proximity_sensor, equip_sensors,\
-        interpret, interpret_robot_id
+    # # from ..env.env import make_laser_sensor,\
+    #     make_proximity_sensor, equip_sensors,\
+    #     interpret, interpret_robot_id
+    # import ..env.env.make_laser_sensor
+    from ... import env
     # Test within search region check,
     # and the observation model probability and
     # sampling functions.

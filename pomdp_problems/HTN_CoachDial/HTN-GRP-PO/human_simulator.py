@@ -17,25 +17,26 @@ TESTCASES_DIR = WORKTREE_DIR_BASELINE + "/TestCases"
 class human_simulator(object):
     def __init__(self):
         self._notifs = [] ##List of notifications.
-        # self._notifs_to_index = defaultdict(int)
+        self._notifs_to_index = defaultdict(list)
         # self._index_to_notifs = defaultdict(list)
         self.forgetfulness = config.forgetfulness
         self.wrong_actions = {}
         self.wrong_actions[0] =["use_soap","open_tea_box", "rinse_hand"] #soft 
         self.wrong_actions[1]=["turn_off_faucet_1", "close_tea_box"] #hard
         self.correct_actions = ["turn_on_faucet_1", "open_tea_box"] #hard
-        self.read_files(TESTCASES_DIR)
         self.index_test_case = None
         self.bool_wrong_actions = None
         self.prev_step = None
         self.start_action = {}
+        self.read_files(TESTCASES_DIR)
+        
         # self.
 
     def read_files(self,dir_name):
         # notifs = []
         # index = 0
         for file_name in os.listdir(dir_name):
-            if os.path.isfile(file_name):
+            if os.path.isfile(os.path.join(dir_name, file_name)):
                 notif = notification(dir_name+"/"+file_name)
                 # notif._notif = list(self._notif)
                 self._notifs.append(notif)
@@ -44,7 +45,7 @@ class human_simulator(object):
                     if ind == 0:
                         testcase_number = file_name[4:]
                         self.start_action[int(testcase_number)] = n
-                    self._index_to_notifs[index] = n
+                    # self._index_to_notifs[index] = n
                     self._notifs_to_index[n].append(index)
                     index+=1
                 ##design to have all files in one dict
@@ -54,16 +55,21 @@ class human_simulator(object):
                 # self._notifs_to_index[notif].append(index)
                 # index+=1
     def goal_selection(self):
-        self.index_test_case = random.randint(0, len(self._notifs))
+        self.index_test_case = random.randint(0, len(self._notifs)-1)
 
     def curr_step(self, prev_step, action):
-        self.prev_step  = prev_step._sensor_notification
+        # title = "sensor_notif"
+        # title_split = title.split("_")
+        # self.prev_step = prev_step.attributes[title_split]
+        # self.prev_step  = prev_step._sensor_notification
+        self.prev_step = prev_step
         num = random.random()
         if self.bool_wrong_actions and action == "give-next-instruction":
             curr_step = self.correct_actions[self.bool_wrong_actions]
             self.bool_wrong_actions = None
         else:
             if num < 1 - self.forgetfulness:
+                # print("goal test case index", )
                 curr_step = self._notifs[self.index_test_case].get_one_notif()
             else:
                 index_soft_or_hard = random.randint(0,1)
