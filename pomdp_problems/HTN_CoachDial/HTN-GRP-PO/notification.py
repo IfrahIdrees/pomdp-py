@@ -25,11 +25,11 @@ class notification(object):
             self._notif.put(step)
         
     ##without deleting
-    def get_one_notif(self):
+    def get_one_notif(self, step_index=0):
         if self._notif.empty():
             return None
         else:
-            return self._notif.queue[0]  
+            return self._notif.queue[step_index]  
         
         
     ##delete the next element in insertion order

@@ -292,7 +292,7 @@ class HTNCoachDialObservation(pomdp_py.OOObservation):
     thus this is an OOObservation."""
     def __init__(self, lang_objattrs):
         """
-        objposes (dict): map from objid(obj_name_attr_name) to state value or NULL (not ObjectObservation!).
+        objposes (dict): map from objid(obj_name-attr_name) to state value or NULL (not ObjectObservation!).
         """
         self._hashcode = hash(frozenset(lang_objattrs.items()))
         self.lang_objattrs = lang_objattrs
@@ -318,41 +318,82 @@ class HTNCoachDialObservation(pomdp_py.OOObservation):
     def __repr__(self):
         return str(self)
 
-    def factor(self, next_state, *params, **kwargs):
-        """Factor this OO-observation by objects"""
-        # return {objid: ObjectObservation(objid, self.objposes[objid])
-        #         for objid in next_state.object_states
-        #         if objid != next_state.robot_id}
+    # def factor(self, next_state, *params, **kwargs):
+    #     """Factor this OO-observation by objects"""
+    #     # return {objid: ObjectObservation(objid, self.objposes[objid])
+    #     #         for objid in next_state.object_states
+    #     #         if objid != next_state.robot_id}
 
-        # return 
-        factored_observations = {}
-        for objid in self.lang_objattrs.keys():
-            title = objid.split("_")
-            factored_observations[objid]=ObjectAttrAndLangObservation(title[0], title[1], self.lang_objattrs[objid])
-        return factored_observations
-    #     return {objid:
-    #             ObjectAttrAndLangObservation(obj_type, obj_name, attr_name, attr_val)
-    #             ObjectObservation(objid, self.objposes[objid])
-    #             for objid in self.lang_objattrs.keys()}
-    #             # if objid != next_state.robot_id}
-    # #
+    #     # return 
+    #     factored_observations = {}
+    #     for objid in self.lang_objattrs.keys():
+    #         title = objid.split("-")
+    #         factored_observations[objid]=ObjectAttrAndLangObservation(title[0], title[1], self.lang_objattrs[objid])
+    #     return factored_observations
+    # #     return {objid:
+    # #             ObjectAttrAndLangObservation(obj_type, obj_name, attr_name, attr_val)
+    # #             ObjectObservation(objid, self.objposes[objid])
+    # #             for objid in self.lang_objattrs.keys()}
+    # #             # if objid != next_state.robot_id}
+    # # #
     
-    @classmethod
-    def merge(cls, object_observations, next_state, *params, **kwargs):
-        """Merge `object_observations` into a single OOObservation object;
+    # @classmethod
+    # def merge(cls, object_observations, next_state, *params, **kwargs):
+    #     """Merge `object_observations` into a single OOObservation object;
         
-        object_observation (dict): Maps from objid to ObjectObservation"""
-        merge_dict = {}
-        for obs in object_observations:
-            title = "_".join([obs.obj_name, obs.attr_name])
-            merge_dict[title] = obs.attr_val
-        return HTNCoachDialObservation(merge_dict)
-        # return HTNCoachDialObservation({objid: object_observations[objid].pose
-        #                          for objid in object_observations
-        #                          if objid != next_state.object_states[objid].objclass != "robot"})
+    #     object_observation (dict): Maps from objid to ObjectObservation"""
+    #     merge_dict = {}
+    #     for obs in object_observations:
+    #         title = "_".join([obs.obj_name, obs.attr_name])
+    #         merge_dict[title] = obs.attr_val
+    #     return HTNCoachDialObservation(merge_dict)
+    #     # return HTNCoachDialObservation({objid: object_observations[objid].pose
+    #     #                          for objid in object_observations
+    #     #                          if objid != next_state.object_states[objid].objclass != "robot"})
 
-        # ({objid: object_observations[objid].pose
+    #     # ({objid: object_observations[objid].pose
 
+
+class HTNCoachDialObservationModel(pomdp_py.ObservationModel):
+    def __init__(self,lang_objattrs):
+        # self.noise = noise
+        # self.hs = human_simulator()
+        self._hashcode = hash(frozenset(lang_objattrs.items()))
+        self._lang_objattrs_prob = lang_objattrs_prob
+
+    def probability(self, observation, next_state, action):
+        #joint probablity of all the 
+        # if action.name == "listen":
+        #     if observation.name == next_state.name: # heard the correct growl
+        #         return 1.0 - self.noise
+        #     else:
+        #         return self.noise
+        # else:
+        #     return 0.5
+
+        for objid, val in observation.lang_objattrs:
+            return self._lang_objattrs_prob[objid][val]
+
+        # retu/rn 
+
+
+    def sample(self, next_state, action):
+        if action.name == "listen":
+            thresh = 1.0 - self.noise
+        else:
+            thresh = 0.5
+
+        if random.uniform(0,1) < thresh:
+            # return Type(Observation
+            return wrapperobservation([facucet_on, hand_soapy, yes])
+            return TigerObservation(next_state.name)
+        else:
+            return TigerObservation(next_state.other().name)
+
+    def get_all_observations(self):
+        """Only need to implement this if you're using
+        a solver that needs to enumerate over the observation space (e.g. value iteration)"""
+        return [TigerObservation(s) for s in {"tiger-left", "tiger-right"}]
 
 # Observation model
 class ObservationModel(pomdp_py.ObservationModel):
@@ -406,12 +447,12 @@ class TransitionModel(pomdp_py.TransitionModel):
 
         else:
             question_asked = None
-        title = "language_indexQuestionAsked"
-        title_split = title.split("_")
+        title = "language-indexQuestionAsked"
+        title_split = title.split("-")
         question_asked_state = state.get_object_state(title)
         question_asked_state.attributes[title_split[1]] = question_asked
-        title = "sensor_notif"
-        title_split = title.split("_")
+        title = "sensor-notif"
+        title_split = title.split("-")
         sensor_state = state.get_object_state(title)
         sensor_state.attributes[title_split[1]] =  self.human_simulator.curr_step(sensor_state.attributes[title_split[1]], action.name)
         # question_asked_state.attributes[title_split[1]] = self.human_simulator.curr_step(question_asked_state.attributes[title_split[1]], action.name)
@@ -459,13 +500,13 @@ class RewardModel(pomdp_py.RewardModel):
         ''' Sensor notif is taken from the previous state based on which the question is asked and the
         # question asked index is extracted from next state because after the action of asking question it will be updated
         # in the next state '''
-        title = "sensor_notif"
-        title_split = title.split("_")
+        title = "sensor-notif"
+        title_split = title.split("-")
         sensor_state = state.get_object_state(title)
         sensor_notification = sensor_state.attributes[title_split[1]]
         
-        title = "language_indexQuestionAsked"
-        title_split = title.split("_")
+        title = "language-indexQuestionAsked"
+        title_split = title.split("-")
         question_asked_state = next_state.get_object_state(title)
         question_asked = question_asked_state.attributes[title_split[1]]
         if self.human_simulator._notifs[self.human_simulator.index_test_case]._notif.empty():
@@ -589,7 +630,7 @@ def convert_object_belief_to_histogram(init_worldstate_belief):
             if obj_state_dict != {}:
                 # obj_belief_dict[obj_name].append(obj_state_dict)
                 init_object_state = max(obj_state_dict, key=obj_state_dict.get)
-                obj_id = "_".join(list(init_object_state.attributes.values())[:-1])
+                obj_id = "-".join(list(init_object_state.attributes.values())[:-1])
                 obj_belief_dict[obj_id] = pomdp_py.Histogram(obj_state_dict)
                 HTN_object_state_dict[obj_id] = init_object_state
         # ObjectAttrAndLangState("object", )
@@ -642,6 +683,63 @@ class HTNCoachDial(pomdp_py.POMDP):
         return HTNCoachDial_problem
 
 
+def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=False, discount=0.95, gamma = 1.0, total_reward = 0, total_discounted_reward = 0, i=0):
+    action = planner.plan(HTNCoachDial_problem.agent)
+    if debug_tree:
+        from pomdp_py.utils import TreeDebugger
+        dd = TreeDebugger(HTNCoachDial_problem.agent.tree)
+        import pdb; pdb.set_trace()
+
+    print("==== Step %d ====" % (i+1))
+    ## true state, get from simulator
+    if i == 0:
+        curr_step = HTNCoachDial_problem.hs.curr_step("none", action, True)
+    else:
+        curr_step = HTNCoachDial_problem.hs.curr_step(curr_step, action, True)
+    
+    env_reward = HTNCoachDial_problem.env.reward_model.sample(HTNCoachDial_problem.env.state, action, None)
+    
+    print("True state: %s" % curr_step)
+    # print("True state: %s" % HTNCoachDial_problem.env.state)
+    print("Belief: %s" % str(HTNCoachDial_problem.agent.cur_belief))
+    print("Action: %s" % str(action))
+    print("Reward: %s" % str(env_reward))
+    total_reward += env_reward
+    total_discounted_reward += env_reward * gamma
+    gamma *= discount
+    print("Reward (Cumulative): %s" % str(total_reward))
+    print("Reward (Cumulative Discounted): %s" % str(total_discounted_reward))
+        
+    if isinstance(planner, pomdp_py.POUCT):
+            print("__num_sims__: %d" % planner.last_num_sims)
+            print("__plan_time__: %.5f" % planner.last_planning_time)
+    if isinstance(planner, pomdp_py.PORollout):
+        print("__best_reward__: %d" % planner.last_best_reward)
+        
+    # Let's create some simulated real observation; Update the belief
+    # Creating true observation for sanity checking solver behavior.
+    # In general, this observation should be sampled from agent's observation model.
+    real_observation = TigerObservation(HTNCoachDial_problem.env.state.name)
+    print(">> Observation: %s" % real_observation)
+    HTNCoachDial_problem.agent.update_history(action, real_observation)
+
+    # If the planner is POMCP, planner.update also updates agent belief.
+    planner.update(HTNCoachDial_problem.agent, action, real_observation)
+    if isinstance(planner, pomdp_py.POUCT):
+        print("Num sims: %d" % planner.last_num_sims)
+        print("Plan time: %.5f" % planner.last_planning_time)
+
+    if isinstance(HTNCoachDial_problem.agent.cur_belief, pomdp_py.Histogram):
+        new_belief = pomdp_py.update_histogram_belief(HTNCoachDial_problem.agent.cur_belief,
+                                                        action, real_observation,
+                                                        HTNCoachDial_problem.agent.observation_model,
+                                                        HTNCoachDial_problem.agent.transition_model)
+        HTNCoachDial_problem.agent.set_belief(new_belief)
+
+    # if action.name.startswith("open"):
+        # Make it clearer to see what actions are taken until every time door is opened.
+        # print("\n")
+    return total_reward, total_discounted_reward
 
 
 def test_planner(HTNCoachDial_problem, planner, nsteps=3, debug_tree=False):

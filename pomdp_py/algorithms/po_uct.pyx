@@ -380,6 +380,7 @@ cdef class POUCT(Planner):
 
         while depth < self._max_depth:
             action = self._rollout_policy.rollout(state, history)
+            print("here in rollout model")
             next_state, observation, reward, nsteps = sample_generative_model(self._agent, state, action)
             history = history + ((action, observation),)
             depth += nsteps
@@ -412,9 +413,11 @@ cdef class POUCT(Planner):
         cdef Observation observation
         cdef float reward
 
+        
         if self._agent.transition_model is None:
             next_state, observation, reward = self._agent.generative_model.sample(state, action)
         else:
+            
             next_state = self._agent.transition_model.sample(state, action)
             observation = self._agent.observation_model.sample(next_state, action)
             reward = self._agent.reward_model.sample(state, action, next_state)

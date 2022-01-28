@@ -269,7 +269,7 @@ class explaSet(object):
         self.highest_action_PS = highest_action_PS
         plang_st = 0
         for k in self._action_posterior_prob: 
-            posteriorK = self.cal_posterior(k) #p(obs| st-1, at) since sum over st-1 so PosteriorK returns p(obst|at)
+            posteriorK, observation_prob = self.cal_posterior(k) #p(obs| st-1, at) since sum over st-1 so PosteriorK returns p(obst|at)
             
             ##@II posteriorK is the p(w_obst|PS) 
             ##calculate p(l_obs|PS)
@@ -291,7 +291,7 @@ class explaSet(object):
 
         ##@II
         self.otherHappen = otherHappen
-        return otherHappen #high prob that language is correct
+        return otherHappen, observation_prob #high prob that language is correct
        
     def cal_lang_posterior(self, highest_action_PS, action):
         if action == highest_action_PS[0]:
@@ -324,6 +324,7 @@ class explaSet(object):
         #attribute is the corresponding attribute distribution in title, ## attribute includes prior prob of the state of sensors and observe includes p(obs| previousstate of sensor)
         attribute = []
         observe_prob = []
+        observation_prob = {}
         ## add language in observe_prob
 
         for item in title:
@@ -337,11 +338,12 @@ class explaSet(object):
                 observe_distribute[value] = db.get_obs_prob(value, item[0], item[1])
             ## attribute and ##observe just fetching from database. It is fixed initially.
             observe_prob.append(observe_distribute)
-           
+            observation_prob_key = "-".join(item)
+            observation_prob[observation_prob_key] = observe_distribute
         enum = self.myDFS(attribute)
         new_prob=self.variable_elim(enum, op, title, attribute, observe_prob) #p(o|st-1,a)
    
-        return new_prob
+        return new_prob, observation_prob
          
     ##dfs is used to generate the enumeration of all possible state combinations    
     def myDFS(self, attribute):
@@ -531,27 +533,48 @@ class explaSet(object):
                     self.add_exp(expla)          
         return
         
-    def update_language_feedback(self, step, highest_action_PS):
+    def update_with_language_feedback(self, step, highest_action_PS, p_l):
         # for expla in self._explaset:
         #     expla
-
+        weights = [0 for i in range(len(self._explaset))]
         for expla in self._explaset:
             # goal_prob = expla._prob
+            correct_taskNets = 0
+            
             for taskNet_ in expla._forest:
                 # for taskNet_ in forest:
                 ExecuteSequence =  taskNet_._execute_sequence._sequence
-                if highest_action_PS[0] in ExecuteSequence and step == 'Yes':
-                    taskNet_._expandProb *= 0.99
-                    expla._prob*=0.99
-                elif not (highest_action_PS[0] in ExecuteSequence) and step == 'Yes':
-                    taskNet_._expandProb *= 0.01
-                    expla._prob*=0.01
-                elif step == 'No' and  not (highest_action_PS[0] in ExecuteSequence):
-                    taskNet_._expandProb *= 0.99
-                    expla._prob*=0.99
-                elif step == 'No' and  (highest_action_PS[0] in ExecuteSequence):
-                    taskNet_._expandProb *= 0.01
-                    expla._prob*=0.01
+                if ExecuteSequence == []:
+                    # taskNet_._expandProb *= 0.01
+                    # expla._prob*=0.01
+                    continue
+                if highest_action_PS[0] == ExecuteSequence[-1] and step == 'Yes':
+                    correct_taskNets+=1
+                    # taskNet_._expandProb *= 0.99 
+                    # expla._prob*=0.99
+                elif not (highest_action_PS[0] == ExecuteSequence[-1]) and step == 'Yes':
+                    # taskNet_._expandProb *= 0.01
+                    # expla._prob*=0.01
+                    continue
+                elif step == 'No' and  not (highest_action_PS[0] == ExecuteSequence[-1]):
+                    correct_taskNets+=1
+                    # taskNet_._expandProb *= 0.99
+                    # expla._prob*=0.99
+                elif step == 'No' and  (highest_action_PS[0] == ExecuteSequence[-1]):
+                    # taskNet_._expandProb *= 0.01
+                    # expla._prob*=0.01
+                    continue
+
+                # taskNet_._expandProb *= p_l
+                # expla._prob*=p_l
+            delta = 0.001
+            if len(expla._forest) == 0:
+                weight = 0+delta
+            else:
+                weight = float(correct_taskNets)/len(expla._forest)+delta
+            expla._prob*=weight*p_l #using tasknets as weightd for adjust probs of explanation prob. but after normalizing it is the same.
+
+
         return
 
                 #         expla._pendingSet
@@ -561,6 +584,34 @@ class explaSet(object):
                 # else:
                 #     self._action_posterior_prob[action[0]] = action[1]
             # for ac
+
+
+    def update_without_language_feedback(self, p_l):
+        # for expla in self._explaset:
+        #     expla
+
+        for expla in self._explaset:
+            # goal_prob = expla._prob
+            # for taskNet_ in expla._forest:
+                # for taskNet_ in forest:
+                # ExecuteSequence =  taskNet_._execute_sequence._sequence
+                # if highest_action_PS[0] in ExecuteSequence and step == 'Yes':
+                #     taskNet_._expandProb *= 0.99 
+                #     expla._prob*=0.99
+                # elif not (highest_action_PS[0] in ExecuteSequence) and step == 'Yes':
+                #     taskNet_._expandProb *= 0.01
+                #     expla._prob*=0.01
+                # elif step == 'No' and  not (highest_action_PS[0] in ExecuteSequence):
+                #     taskNet_._expandProb *= 0.99
+                #     expla._prob*=0.99
+                # elif step == 'No' and  (highest_action_PS[0] in ExecuteSequence):
+                #     taskNet_._expandProb *= 0.01
+                #     expla._prob*=0.01
+
+                # taskNet_._expandProb *= (1-p_l)
+            expla._prob*= (1 - p_l)
+        return
+   
     ##################################################################################################    
     ####                                        Part V                                           #####
     ####            Generate the new pending set for each explanation                            #####  
@@ -587,7 +638,8 @@ class explaSet(object):
 
         taskhint.average_level()
 
-        taskhint.print_taskhintInTable()  
+        taskhint.print_taskhintInTable()
+        print("taskhint", taskhint.__dict__)   
         return taskhint  
 
     ##################################################################################################    

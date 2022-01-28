@@ -18,10 +18,16 @@ sys.dont_write_bytecode = True
 from pymongo import MongoClient
 import pymongo
 import random
+# client = MongoClient()
+# db = client.smart_home3
+import config
 
-client = MongoClient()
-db = client.smart_home3
-
+if config.RANDOM_BASELINE:
+    client = MongoClient()
+    db = client.smart_homeRANDOM
+else:
+    client = MongoClient()
+    db = client.smart_home3
 
 class DB_Object(object):
     def __init__(self):

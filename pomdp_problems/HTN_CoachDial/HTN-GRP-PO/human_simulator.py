@@ -25,10 +25,15 @@ class human_simulator(object):
         self.wrong_actions[1]=["turn_off_faucet_1", "close_tea_box"] #hard
         self.correct_actions = ["turn_on_faucet_1", "open_tea_box"] #hard
         self.index_test_case = None
-        self.bool_wrong_actions = None
-        self.prev_step = None
+        # self.bool_wrong_actions = None
+        # self.prev_step = None
         self.start_action = {}
         self.read_files(TESTCASES_DIR)
+        self.mcts_step_index =  -1
+        self.real_step_index = -1
+        self.mcts_bool_wrong_actions = None
+        self.real_bool_wrong_actions = None
+        # self.mcts_bool_wrong_actions = None
         
         # self.
 
@@ -56,27 +61,52 @@ class human_simulator(object):
                 # index+=1
     def goal_selection(self):
         self.index_test_case = random.randint(0, len(self._notifs)-1)
+        print("Selected test case is", self.index_test_case)
 
-    def curr_step(self, prev_step, action):
+    def curr_step(self, prev_step, action, real_step = False):
+        num = random.random()
+        if real_step:
+            prev_step_index = self.real_step_index
+            bool_wrong_actions = self.real_bool_wrong_actions
+            # self.real_bool_wrong_actions = None
+        else:
+            prev_step_index = self.mcts_step_index
+            bool_wrong_actions = self.mcts_bool_wrong_actions
+            # self.mcts_bool_wrong_actions = None
+
         # title = "sensor_notif"
         # title_split = title.split("_")
         # self.prev_step = prev_step.attributes[title_split]
         # self.prev_step  = prev_step._sensor_notification
-        self.prev_step = prev_step
-        num = random.random()
-        if self.bool_wrong_actions and action == "give-next-instruction":
-            curr_step = self.correct_actions[self.bool_wrong_actions]
-            self.bool_wrong_actions = None
+        # self.prev_step = prev_step
+        # TODO: Need to deal with wrong action execution for mcts and real separately.
+        
+        if bool_wrong_actions and action == "give-next-instruction":
+            curr_step = self.correct_actions[bool_wrong_actions]
+            # self.bool_wrong_actions = None
+
+            if real_step:
+                self.real_bool_wrong_actions = None
+            else:
+                self.mcts_bool_wrong_actions = None
         else:
             if num < 1 - self.forgetfulness:
                 # print("goal test case index", )
-                curr_step = self._notifs[self.index_test_case].get_one_notif()
+                prev_step_index+=1
+                curr_step = self._notifs[self.index_test_case].get_one_notif(prev_step_index)
+            
             else:
                 index_soft_or_hard = random.randint(0,1)
                 if index_soft_or_hard:
-                    self.bool_wrong_actions = index_soft_or_hard
+                    bool_wrong_actions = index_soft_or_hard
                 curr_step = random.choice(self.wrong[index_soft_or_hard])
-            return curr_step
+
+
+        if real_step:
+            self.real_step_index = prev_step_index 
+        else:
+            self.mcts_step_index = prev_step_index 
+        return curr_step
         # pass
 
 
@@ -120,5 +150,7 @@ class human_simulator(object):
 
     # for notif in notifs:
 
+    def clear_mcts_history(self):
+        self.mcts_step_index =  self.real_step_index
         
 

@@ -24,7 +24,11 @@ import numpy as np
 from pomdp_problems.multi_object_search.domain.state import *
 from pomdp_problems.multi_object_search.domain.action import *
 from pomdp_problems.multi_object_search.domain.observation import *
-
+# from ... import env
+# import ..env.env
+# import ...env
+from ..env.env import *
+# import os, sys; sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 #### Observation Models ####
 class MosObservationModel(pomdp_py.OOObservationModel):
     """Object-oriented transition model"""
@@ -196,7 +200,9 @@ def unittest():
     #     make_proximity_sensor, equip_sensors,\
     #     interpret, interpret_robot_id
     # import ..env.env.make_laser_sensor
-    from ... import env
+    # from ... import env
+    # from ..models.transition_model import *
+    
     # Test within search region check,
     # and the observation model probability and
     # sampling functions.

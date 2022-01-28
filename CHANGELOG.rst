@@ -3,6 +3,13 @@ Changelog
 
 Best viewed on `the website <https://h2r.github.io/pomdp-py/html/changelog.html>`_.
 
+(28/03/2021)
+-------------------------
+Added code to handle random baseline
+Incorporated latest math update code in explaset, main and tracking engine
+Added HTNobservational mdoel but not tested it.
+Added print statement to pouct and basics
+
 Version 1.3.1 (11/03/2021)
 -------------------------
 * Bug fix in :py:mod:`~pomdp_py.representations.distribution.particles` (in :code:`add`)
