@@ -5,6 +5,7 @@ import numpy as np
 import random
 import config
 random.seed(10)
+from Simulator import *
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 htn_coachdial_dir = os.path.dirname(BASE_DIR)
@@ -15,16 +16,17 @@ WORKTREE_DIR_BASELINE = os.path.dirname(pomdp_py_dir)
 TESTCASES_DIR = WORKTREE_DIR_BASELINE + "/TestCases"
 
 class human_simulator(object):
-    def __init__(self):
+    def __init__(self, output_filename):
+        self.index_test_case = int(output_filename.split("_")[0][4:])-1
         self._notifs = [] ##List of notifications.
         self._notifs_to_index = defaultdict(list)
         # self._index_to_notifs = defaultdict(list)
         self.forgetfulness = config.forgetfulness
         self.wrong_actions = {}
-        self.wrong_actions[0] =["use_soap","open_tea_box", "rinse_hand"] #soft 
-        self.wrong_actions[1]=["turn_off_faucet_1", "close_tea_box"] #hard
-        self.correct_actions = ["turn_on_faucet_1", "open_tea_box"] #hard
-        self.index_test_case = None
+        self.wrong_actions[0] =["use_soap","open_tea_box_1", "rinse_hand"] #soft 
+        self.wrong_actions[1]=["turn_off_faucet_1", "close_tea_box_1"] #hard
+        self.correct_actions = ["turn_on_faucet_1", "open_tea_box_1"] #hard
+        # self.index_test_case = None
         # self.bool_wrong_actions = None
         # self.prev_step = None
         self.start_action = {}
@@ -34,13 +36,31 @@ class human_simulator(object):
         self.mcts_bool_wrong_actions = None
         self.real_bool_wrong_actions = None
         # self.mcts_bool_wrong_actions = None
+        self.output_filename = output_filename
         
         # self.
 
     def read_files(self,dir_name):
         # notifs = []
         # index = 0
-        for file_name in os.listdir(dir_name):
+
+        sorted_filename = sorted(os.listdir(dir_name))
+        sorted_filename.remove("ignore")
+        # for ind, filename in sorted_filename:
+        ind = 0
+        filename = sorted_filename[0]
+        while filename != "Case2":
+            if filename == "Case1":
+                ind+=1
+                filename = sorted_filename[ind]
+                continue
+            filename = sorted_filename.pop(ind)
+            sorted_filename.append(filename)
+            filename = sorted_filename[ind]
+
+
+
+        for file_name in sorted_filename:
             if os.path.isfile(os.path.join(dir_name, file_name)):
                 notif = notification(dir_name+"/"+file_name)
                 # notif._notif = list(self._notif)
@@ -59,7 +79,7 @@ class human_simulator(object):
                 # self._index_to_notifs[index] = notif
                 # self._notifs_to_index[notif].append(index)
                 # index+=1
-    def goal_selection(self):
+    def random_goal_selection(self):
         self.index_test_case = random.randint(0, len(self._notifs)-1)
         print("Selected test case is", self.index_test_case)
 
@@ -79,7 +99,7 @@ class human_simulator(object):
         # self.prev_step = prev_step.attributes[title_split]
         # self.prev_step  = prev_step._sensor_notification
         # self.prev_step = prev_step
-        # TODO: Need to deal with wrong action execution for mcts and real separately.
+        # TODO: Done Need to deal with wrong action execution for mcts and real separately.
         
         if bool_wrong_actions and action == "give-next-instruction":
             curr_step = self.correct_actions[bool_wrong_actions]
@@ -94,19 +114,24 @@ class human_simulator(object):
                 # print("goal test case index", )
                 prev_step_index+=1
                 curr_step = self._notifs[self.index_test_case].get_one_notif(prev_step_index)
-            
+
             else:
                 index_soft_or_hard = random.randint(0,1)
                 if index_soft_or_hard:
                     bool_wrong_actions = index_soft_or_hard
-                curr_step = random.choice(self.wrong[index_soft_or_hard])
+                curr_step = random.choice(self.wrong_actions[index_soft_or_hard])
 
 
         if real_step:
             self.real_step_index = prev_step_index 
+            sensor_notification = realStateANDSensorUpdate(curr_step, self.output_filename, real_step = True)
+            print("simulation", prev_step_index, curr_step)
+            a=1
         else:
-            self.mcts_step_index = prev_step_index 
-        return curr_step
+            self.mcts_step_index = prev_step_index
+            sensor_notification = realStateANDSensorUpdate(curr_step, self.output_filename, real_step = False)
+
+        return curr_step, sensor_notification
         # pass
 
 
@@ -150,6 +175,15 @@ class human_simulator(object):
 
     # for notif in notifs:
 
+    def check_notif_queue_length(self):
+        return self._notifs[self.index_test_case]._notif.qsize()
+
+    def mcts_check_terminal_state(self):
+        return self.mcts_step_index == (self._notifs[self.index_test_case]._notif.qsize() - 1)
+    
+    def real_check_terminal_state(self):
+        return self.real_step_index == (self._notifs[self.index_test_case]._notif.qsize() - 1)
+    
     def clear_mcts_history(self):
         self.mcts_step_index =  self.real_step_index
         

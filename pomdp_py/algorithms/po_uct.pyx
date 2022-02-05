@@ -387,6 +387,7 @@ cdef class POUCT(Planner):
             total_discounted_reward += reward * discount
             discount *= (self._discount_factor**nsteps)
             state = next_state
+        print("Max depth reached")
         return total_discounted_reward
 
     cpdef Action _ucb(self, VNode root):

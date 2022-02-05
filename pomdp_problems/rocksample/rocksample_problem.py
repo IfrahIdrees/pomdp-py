@@ -166,8 +166,10 @@ class RSTransitionModel(pomdp_py.TransitionModel):
         expected = (position[0] + action.motion[0],
                     position[1] + action.motion[1])
         if self._in_exit_area(expected):
+            # print("new state is", expected, True)
             return expected, True
         else:
+                    # max(0, min(position[1] + action.motion[1], self._n-1))), False)
             return (max(0, min(position[0] + action.motion[0], self._n-1)),
                     max(0, min(position[1] + action.motion[1], self._n-1))), False
 
@@ -195,6 +197,7 @@ class RSTransitionModel(pomdp_py.TransitionModel):
                     _rocktypes = list(rocktypes)
                     _rocktypes[rock_id] = RockType.BAD
                     next_rocktypes = tuple(_rocktypes)
+        print("new state is", (next_position, next_rocktypes, next_terminal))
         return State(next_position, next_rocktypes, next_terminal)
 
     def argmax(self, state, action):

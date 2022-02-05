@@ -42,6 +42,12 @@ import numpy as np
 import sys
 from human_simulator import *
 import math
+from database import *
+from helper import *
+from env import *
+db = DB_Object()
+import config
+# import copy
 # from ExplaSet import *
 # class TigerState(pomdp_py.State):
 #     def __init__(self, name):
@@ -63,6 +69,7 @@ import math
 #         else:
 #             return TigerState("tiger-left")
 
+
 class ObjectAttrAndLangState(pomdp_py.ObjectState):
     def __init__(self, object_class, obj_attr_dict):
         # """Note: camera_direction is None unless the robot is looking at a direction,
@@ -73,7 +80,7 @@ class ObjectAttrAndLangState(pomdp_py.ObjectState):
         ## question_asked
     def __str__(self):
         # return 'ObjectState(%s,%s|%s' % (str(self.objclass), str(self.pose), str(self.objects_found))
-        return 'ObjectState(%s|%s' % (str(self.objclass), str(self.attributes))
+        return 'ObjectAttrAndLangState(%s|%s' % (str(self.objclass), str(self.attributes))
     def __repr__(self):
         return str(self)
     # @property
@@ -90,8 +97,8 @@ class ObjectAttrAndLangState(pomdp_py.ObjectState):
     #     return self.attributes['objects_found']
 
 class HTNCoachDialState(pomdp_py.OOState):
-    def __init__(self, object_states):
-        self.htn_exlpaset_action_posterior = None
+    def __init__(self, htn_explaset, object_states):
+        self.htn_explaset = htn_explaset
         super().__init__(object_states)
     # def object_pose(self, objid):
     #     return self.object_states[objid]["pose"]
@@ -105,6 +112,13 @@ class HTNCoachDialState(pomdp_py.OOState):
         return 'HTNCoachDialState%s' % (str(self.object_states))
     def __repr__(self):
         return str(self)
+    def append_object_attribute(self, objid, attr, new_val):
+        attr_val_list = self.object_states[objid][attr]
+        attr_val_list.append(new_val)
+    def set_htn_explaset(self,explaset):
+        self.htn_explaset = explaset
+        return
+
 
 # class HTNCoachDialState(pomdp_py.State):
 #     # TODO:check this?
@@ -203,9 +217,9 @@ class AgentAskClarificationQuestion(Action):
         # question_asked_state.attributes[title_split[1]] = question_asked
         
         highest_action_PS = ["", float('-inf')]
-        if state.htn_exlpaset_action_posterior == None:
+        if state.htn_explaset == None:
             return None
-        for k, v in state.htn_exlpaset_action_posterior.items():
+        for k, v in state.htn_explaset._action_posterior_prob.items():
             if v > highest_action_PS[1]:
                 highest_action_PS = [k,v]
         #TODO: actual epxlaset not updated
@@ -258,7 +272,7 @@ class ObjectAttrAndLangObservation(pomdp_py.Observation):
         return hash((self.obj_name, self.attr_name, self.attr_val))
     def __eq__(self, other):
         if not isinstance(other, ObjectObservation):
-            return False
+            return False 
         else:
             return self.obj_name == other.obj_name\
                 and self.attr_name == other.attr_name\
@@ -318,6 +332,8 @@ class HTNCoachDialObservation(pomdp_py.OOObservation):
     def __repr__(self):
         return str(self)
 
+    def get_lang_objattr(self, objid):
+        return self.lang_objattrs[objid]
     # def factor(self, next_state, *params, **kwargs):
     #     """Factor this OO-observation by objects"""
     #     # return {objid: ObjectObservation(objid, self.objposes[objid])
@@ -355,11 +371,90 @@ class HTNCoachDialObservation(pomdp_py.OOObservation):
 
 
 class HTNCoachDialObservationModel(pomdp_py.ObservationModel):
+    '''
+    Sample language observation form the state
+    '''
+    def __init__(self):
+        pass
+
+    def probability(self, observation, next_state, action):
+        # if action.name == "ask-clarification-question":
+        # elif action.name == "wait" and observation.get_lang_objattrget_lang_:
+        a=1
+        pass
+
+        
+
+    def sample(self, next_state, action):
+        feedback_title = config.feedback_title
+        if action.name == "ask-clarification-question":
+            question_title = config.question_title
+            question_title_split = question_title.split("-")
+            # question_asked_state = next_state.get_object_state(question_title)
+            question_index = next_state.get_object_attribute(question_title, question_title_split[1])
+            
+
+            explaset_title = config.explaset_title
+
+            explaset_title_split = explaset_title.split("-")
+            sequence_actions = next_state.get_object_attribute(explaset_title, explaset_title_split[1])
+            # sensor_state = next_state.get_object_state(explaset_title)
+            lang_objattrs = {}
+            
+            if question_index == sequence_actions[-2]:
+                lang_objattrs[feedback_title] = "yes"
+            else:
+                lang_objattrs[feedback_title] = "no"
+            
+            ##nextstate is not updated with environment changes for now, just old changes
+        else:
+            lang_objattrs = {feedback_title: None}
+        return HTNCoachDialObservation(lang_objattrs)
+            
+            # question_asked_state.attributes[title_split[1]] = question_asked
+            # question_asked_state.__setitem__(question_title_split[1], question_asked)
+        
+
+        # if action.name == "listen":
+        #     thresh = 1.0 - self.noise
+        # else:
+        #     thresh = 0.5
+
+        # if random.uniform(0,1) < thresh:
+        #     # return Type(Observation
+        #     return wrapperobservation([facucet_on, hand_soapy, yes])
+        #     return TigerObservation(next_state.name)
+        # else:
+        #     return TigerObservation(next_state.other().name)
+        '''
+        sample_observation = {}
+        for key, prob_dist in self._lang_objattrs_prob.items():
+            choice = random.choices(list(prob_dist.keys()), list(prob_dist.values()))
+            sample_observation[key] = choice[0]
+        # return random.choices()
+        return HTNCoachDialObservation(sample_observation)
+        '''
+        
+
+    def get_all_observations(self):
+        """Only need to implement this if you're using
+        a solver that needs to enumerate over the observation space (e.g. value iteration)"""
+        return [TigerObservation(s) for s in {"tiger-left", "tiger-right"}]
+
+    def set_lang_objattrs_prob(self,lang_objattrs_prob):
+        # self._hashcode = hash(frozenset(lang_objattrs_prob.items()))
+        for key, value in lang_objattrs_prob.items():
+            self._lang_objattrs_prob[key] = value
+
+'''
+class HTNCoachDialObservationModel(pomdp_py.ObservationModel):
+    # Sample language observation form the state
+    
     def __init__(self,lang_objattrs):
         # self.noise = noise
         # self.hs = human_simulator()
-        self._hashcode = hash(frozenset(lang_objattrs.items()))
-        self._lang_objattrs_prob = lang_objattrs_prob
+        # self._hashcode = hash(frozenset(lang_objattrs.items()))
+        self._lang_objattrs_prob = lang_objattrs
 
     def probability(self, observation, next_state, action):
         #joint probablity of all the 
@@ -378,56 +473,71 @@ class HTNCoachDialObservationModel(pomdp_py.ObservationModel):
 
 
     def sample(self, next_state, action):
-        if action.name == "listen":
-            thresh = 1.0 - self.noise
-        else:
-            thresh = 0.5
+        # if action.name == "listen":
+        #     thresh = 1.0 - self.noise
+        # else:
+        #     thresh = 0.5
 
-        if random.uniform(0,1) < thresh:
-            # return Type(Observation
-            return wrapperobservation([facucet_on, hand_soapy, yes])
-            return TigerObservation(next_state.name)
-        else:
-            return TigerObservation(next_state.other().name)
+        # if random.uniform(0,1) < thresh:
+        #     # return Type(Observation
+        #     return wrapperobservation([facucet_on, hand_soapy, yes])
+        #     return TigerObservation(next_state.name)
+        # else:
+        #     return TigerObservation(next_state.other().name)
+        sample_observation = {}
+        for key, prob_dist in self._lang_objattrs_prob.items():
+            choice = random.choices(list(prob_dist.keys()), list(prob_dist.values()))
+            sample_observation[key] = choice[0]
+        # return random.choices()
+        return HTNCoachDialObservation(sample_observation)
+
+
 
     def get_all_observations(self):
         """Only need to implement this if you're using
         a solver that needs to enumerate over the observation space (e.g. value iteration)"""
         return [TigerObservation(s) for s in {"tiger-left", "tiger-right"}]
+
+    def set_lang_objattrs_prob(self,lang_objattrs_prob):
+        # self._hashcode = hash(frozenset(lang_objattrs_prob.items()))
+        for key, value in lang_objattrs_prob.items():
+            self._lang_objattrs_prob[key] = value
+        # self._lang_objattrs_prob = lang_objattrs_prob
+'''
 
 # Observation model
-class ObservationModel(pomdp_py.ObservationModel):
-    def __init__(self, noise=0.8):
-        self.noise = noise
-        # self.hs = human_simulator()
+# class ObservationModel(pomdp_py.ObservationModel):
+#     def __init__(self, noise=0.8):
+#         self.noise = noise
+#         # self.hs = human_simulator()
 
-    def probability(self, observation, next_state, action):
-        #joint probablity of all the 
-        if action.name == "listen":
-            if observation.name == next_state.name: # heard the correct growl
-                return 1.0 - self.noise
-            else:
-                return self.noise
-        else:
-            return 0.5
+#     def probability(self, observation, next_state, action):
+#         #joint probablity of all the 
+#         if action.name == "listen":
+#             if observation.name == next_state.name: # heard the correct growl
+#                 return 1.0 - self.noise
+#             else:
+#                 return self.noise
+#         else:
+#             return 0.5
 
-    def sample(self, next_state, action):
-        if action.name == "listen":
-            thresh = 1.0 - self.noise
-        else:
-            thresh = 0.5
+#     def sample(self, next_state, action):
+#         if action.name == "listen":
+#             thresh = 1.0 - self.noise
+#         else:
+#             thresh = 0.5
 
-        if random.uniform(0,1) < thresh:
-            # return Type(Observation
-            return wrapperobservation([facucet_on, hand_soapy, yes])
-            return TigerObservation(next_state.name)
-        else:
-            return TigerObservation(next_state.other().name)
+#         if random.uniform(0,1) < thresh:
+#             # return Type(Observation
+#             return wrapperobservation([facucet_on, hand_soapy, yes])
+#             return TigerObservation(next_state.name)
+#         else:
+#             return TigerObservation(next_state.other().name)
 
-    def get_all_observations(self):
-        """Only need to implement this if you're using
-        a solver that needs to enumerate over the observation space (e.g. value iteration)"""
-        return [TigerObservation(s) for s in {"tiger-left", "tiger-right"}]
+#     def get_all_observations(self):
+#         """Only need to implement this if you're using
+#         a solver that needs to enumerate over the observation space (e.g. value iteration)"""
+#         return [TigerObservation(s) for s in {"tiger-left", "tiger-right"}]
 
 # Transition Model
 class TransitionModel(pomdp_py.TransitionModel):
@@ -441,22 +551,37 @@ class TransitionModel(pomdp_py.TransitionModel):
         # set_object_state(self, objid, object_state)
         # next_state = HTNCoachDialState()
         # get_object_state(self, objid)
-        print("state", state)
+        # print("state", state)
+        if self.human_simulator.mcts_check_terminal_state():
+            return state
         if action.name == "ask-clarification-question":
             question_asked = action.update_question_asked(state)
 
         else:
             question_asked = None
-        title = "language-indexQuestionAsked"
-        title_split = title.split("-")
-        question_asked_state = state.get_object_state(title)
-        question_asked_state.attributes[title_split[1]] = question_asked
-        title = "sensor-notif"
-        title_split = title.split("-")
-        sensor_state = state.get_object_state(title)
-        sensor_state.attributes[title_split[1]] =  self.human_simulator.curr_step(sensor_state.attributes[title_split[1]], action.name)
-        # question_asked_state.attributes[title_split[1]] = self.human_simulator.curr_step(question_asked_state.attributes[title_split[1]], action.name)
-        state.set_object_state(title, sensor_state)
+        question_title = config.question_title
+        question_title_split = question_title.split("-")
+        question_asked_state = state.get_object_state(question_title)
+        # question_asked_state.attributes[title_split[1]] = question_asked
+        question_asked_state.__setitem__(question_title_split[1], question_asked)
+        
+        explaset_title = config.explaset_title
+        explaset_title_split = explaset_title.split("-")
+        sensor_state = state.get_object_state(explaset_title)
+        step,_ = self.human_simulator.curr_step(sensor_state.attributes[explaset_title_split[1]], action.name)
+        state.append_object_attribute(explaset_title, explaset_title_split[1], step)
+
+        # TODO: transition explaset
+        # sensor_state.attributes[explaset_title_split[1]] =  
+        
+
+        # title = "sensor-notif"
+        # title_split = title.split("-")
+        # sensor_state = state.get_object_state(title)
+        # sensor_state.attributes[title_split[1]] =  self.human_simulator.curr_step(sensor_state.attributes[title_split[1]], action.name)
+        # # question_asked_state.attributes[title_split[1]] = self.human_simulator.curr_step(question_asked_state.attributes[title_split[1]], action.name)
+        # state.set_object_state(title, sensor_state)
+        
         # next_state._question_asked = question_asked
         # next_state._sensor_notification = hs.curr_step(self, state, action)
         return state
@@ -500,15 +625,15 @@ class RewardModel(pomdp_py.RewardModel):
         ''' Sensor notif is taken from the previous state based on which the question is asked and the
         # question asked index is extracted from next state because after the action of asking question it will be updated
         # in the next state '''
-        title = "sensor-notif"
-        title_split = title.split("-")
-        sensor_state = state.get_object_state(title)
-        sensor_notification = sensor_state.attributes[title_split[1]]
+        explaset_title = config.explaset_title
+        explaset_title_split = explaset_title.split("-")
+        sensor_state = state.get_object_state(explaset_title)
+        sensor_notification = sensor_state.attributes[explaset_title_split[1]]
         
-        title = "language-indexQuestionAsked"
-        title_split = title.split("-")
-        question_asked_state = next_state.get_object_state(title)
-        question_asked = question_asked_state.attributes[title_split[1]]
+        question_title = config.question_title
+        question_title_split = question_title.split("-")
+        question_asked_state = next_state.get_object_state(question_title)
+        question_asked = question_asked_state.attributes[question_title_split[1]]
         if self.human_simulator._notifs[self.human_simulator.index_test_case]._notif.empty():
             return 10
         elif action.name == "wait":
@@ -580,16 +705,19 @@ class HTNCoachDialBelief(pomdp_py.OOBelief):
             (includes robot)
         """
         # self.robot_id = robot_id
-        self.htn_explaset_action_posterior  = None
+        self.htn_explaset  = None
         super().__init__(object_beliefs)
 
     def mpe(self, **kwargs):
         return HTNCoachDialState(pomdp_py.OOBelief.mpe(self, **kwargs).object_states)
 
     def random(self, **kwargs):
-        return HTNCoachDialState(pomdp_py.OOBelief.random(self, **kwargs).object_states)
+        object_states = pomdp_py.OOBelief.random(self, **kwargs).object_states
+        return HTNCoachDialState(self.htn_explaset, pomdp_py.OOBelief.random(self, **kwargs).object_states)
 
-
+    def set_htn_explaset(self,explaset):
+        self.htn_explaset = explaset
+        return
 
 def convert_object_belief_to_histogram(init_worldstate_belief):
     '''Convert belief object to histogram dictionary'''
@@ -602,6 +730,8 @@ def convert_object_belief_to_histogram(init_worldstate_belief):
     obj_belief_dict = defaultdict(pomdp_py.Histogram)  # {obj_name: state_name: {state1: prob, ..}}
     HTN_object_state_dict = defaultdict(ObjectAttrAndLangState)
     # [objid]=histogram
+    observation_prob ={}
+    observe_distribute ={}
     for obj in init_worldstate_belief:
         obj_name = obj["ob_name"]
 
@@ -611,8 +741,7 @@ def convert_object_belief_to_histogram(init_worldstate_belief):
                 continue
 
             obj_state_dict = {}  # {ObjectState: state_prob}
-            
-
+            prev_observation_prob_key = None
             for state, state_prob in value.items():
                 # if state_prob == 1.0:
                 #     # Skip a state when it only has one possible value.
@@ -624,6 +753,20 @@ def convert_object_belief_to_histogram(init_worldstate_belief):
                 # obj_id = "_".join(obj_state.attributes.keys())
                 # HTN_object_state_dict[obj_id] = obj_state
                 obj_state_dict[obj_state] = state_prob
+
+                # for value in attri_distribute:
+                # observe_distribute[value] = db.get_obs_prob(value, item[0], item[1])
+                observation_prob_key = "-".join([obj_name, key])
+                if observation_prob_key == prev_observation_prob_key:
+                    observe_distribute[state] = db.get_obs_prob(state, obj_name, key) 
+                    observation_prob[observation_prob_key] = observe_distribute
+                    observe_distribute = {}
+                else:
+                    observe_distribute[state] = db.get_obs_prob(state, obj_name, key) 
+                    prev_observation_prob_key = observation_prob_key
+
+            if observe_distribute:
+                observation_prob[observation_prob_key] = observe_distribute
 
             
 
@@ -637,7 +780,14 @@ def convert_object_belief_to_histogram(init_worldstate_belief):
         ##init_object_state
         # attr_dict = {"obj_name": obj_name, key:state}
     print(obj_belief_dict)
-    return obj_belief_dict, HTN_object_state_dict
+    return obj_belief_dict, HTN_object_state_dict, observation_prob
+
+def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang):
+    # print(HTNCoachDial_problem.agent.curr_belief, HTNCoachDial_problem.agent.observation_model,
+                    # HTNCoachDial_problem.agent.transition_model)
+    # pass
+    if real_observation.get_lang_objattr(config.feedback_title) == None:
+        pass
 
 
 
@@ -648,22 +798,26 @@ class HTNCoachDial(pomdp_py.POMDP):
     of how such a class can be created.
     """
 
-    def __init__(self, obs_noise, init_belief):
+    def __init__(self, init_true_state, init_belief, output_filename, observation_prob, explaset = None):
         """init_belief is a Distribution."""
         
-        self.hs = human_simulator()
+        self.hs = human_simulator(output_filename)
         # self.hs.read_files()
-        self.hs.goal_selection()
+        # self.hs.goal_selection()
 
         agent = pomdp_py.Agent(init_belief,
                                PolicyModel(),
                                TransitionModel(self.hs),
-                               ObservationModel(obs_noise),
+                               HTNCoachDialObservationModel(),
                                RewardModel(self.hs))
         # env = pomdp_py.Environment(init_true_state,
         #                            TransitionModel(),
         #                            RewardModel())
-        env = None
+        # self, human_simulator, explaset, init_state, RewardModel, TransitionModel
+        env =  HTNCoachDialEnvironment(self.hs, explaset, init_true_state,
+                                   RewardModel(self.hs), TransitionModel(self.hs))
+        # self.environment_reward_model = RewardModel(self.hs)
+        # env = None
         super().__init__(agent, env, name="HTNCoachDial") ## ask kaiyu
 
     @staticmethod
@@ -683,7 +837,7 @@ class HTNCoachDial(pomdp_py.POMDP):
         return HTNCoachDial_problem
 
 
-def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=False, discount=0.95, gamma = 1.0, total_reward = 0, total_discounted_reward = 0, i=0):
+def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=False, discount=0.95, gamma = 1.0, total_reward = 0, total_discounted_reward = 0, i=0, true_state = None, prob_lang = 0.95):
     action = planner.plan(HTNCoachDial_problem.agent)
     if debug_tree:
         from pomdp_py.utils import TreeDebugger
@@ -692,14 +846,18 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=False, 
 
     print("==== Step %d ====" % (i+1))
     ## true state, get from simulator
-    if i == 0:
-        curr_step = HTNCoachDial_problem.hs.curr_step("none", action, True)
-    else:
-        curr_step = HTNCoachDial_problem.hs.curr_step(curr_step, action, True)
+    # if i == 0:
+    #     curr_step = HTNCoachDial_problem.hs.curr_step("none", action, True)
+    # else:
+    #     curr_step = HTNCoachDial_problem.hs.curr_step(curr_step, action, True)
+    ## env state update accordnig to basics state transition
+    env_reward = HTNCoachDial_problem.env.state_transition(action, execute=True)
+    true_next_state = copy.deepcopy(HTNCoachDial_problem.env.state)
     
-    env_reward = HTNCoachDial_problem.env.reward_model.sample(HTNCoachDial_problem.env.state, action, None)
-    
-    print("True state: %s" % curr_step)
+    # env_reward = HTNCoachDial_problem.env.reward_model.sample(HTNCoachDial_problem.env.state, action, None)
+    # env_reward = HTNCoachDial_problem.environment_reward_model.sample(HTNCoachDial_problem.env.state, action, None)
+    ##TODO: need env state variable in the coachdial probelm. update the state variable with true state info.
+    print("True state: %s" % true_state)
     # print("True state: %s" % HTNCoachDial_problem.env.state)
     print("Belief: %s" % str(HTNCoachDial_problem.agent.cur_belief))
     print("Action: %s" % str(action))
@@ -719,7 +877,9 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=False, 
     # Let's create some simulated real observation; Update the belief
     # Creating true observation for sanity checking solver behavior.
     # In general, this observation should be sampled from agent's observation model.
-    real_observation = TigerObservation(HTNCoachDial_problem.env.state.name)
+    real_observation = HTNCoachDial_problem.env.provide_observation(HTNCoachDial_problem.agent.observation_model,
+                                                              action)
+    # real_observation = TigerObservation(HTNCoachDial_problem.env.state.name)
     print(">> Observation: %s" % real_observation)
     HTNCoachDial_problem.agent.update_history(action, real_observation)
 
@@ -729,12 +889,17 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=False, 
         print("Num sims: %d" % planner.last_num_sims)
         print("Plan time: %.5f" % planner.last_planning_time)
 
-    if isinstance(HTNCoachDial_problem.agent.cur_belief, pomdp_py.Histogram):
-        new_belief = pomdp_py.update_histogram_belief(HTNCoachDial_problem.agent.cur_belief,
-                                                        action, real_observation,
-                                                        HTNCoachDial_problem.agent.observation_model,
-                                                        HTNCoachDial_problem.agent.transition_model)
-        HTNCoachDial_problem.agent.set_belief(new_belief)
+    # TODO: belief update for now update the explaset
+
+    update_belief(HTNCoachDial_problem,
+                    action, real_observation, prob_lang) 
+    
+    # if isinstance(HTNCoachDial_problem.agent.cur_belief, pomdp_py.Histogram):
+    #     new_belief = pomdp_py.update_histogram_belief(HTNCoachDial_problem.agent.cur_belief,
+    #                                                     action, real_observation,
+    #                                                     HTNCoachDial_problem.agent.observation_model,
+    #                                                     HTNCoachDial_problem.agent.transition_model)
+    #     HTNCoachDial_problem.agent.set_belief(new_belief)
 
     # if action.name.startswith("open"):
         # Make it clearer to see what actions are taken until every time door is opened.

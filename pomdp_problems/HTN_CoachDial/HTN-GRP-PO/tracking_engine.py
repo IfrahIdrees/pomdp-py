@@ -12,8 +12,11 @@ Research sponsored by AGEWELL Networks of Centers of Excellence (NCE).
 ################################################################################################
 
 from collections import defaultdict
+from os import EX_TEMPFAIL
 import random
 import time
+
+from pomdp_problems.multi_object_search.models.components import sensor
 from notification import *
 from ExplaSet import *
 from State import *
@@ -45,55 +48,55 @@ class Tracking_Engine(object):
         self.init_worldstate_belief = list(db._state.find())
         self.explaset = explaSet(cond_satisfy = self._cond_satisfy, cond_notsatisfy = self._cond_notsatisfy, delete_trigger = self._delete_trigger, non_happen = self._non_happen, output_file_name = self._output_file_name)
         self.explaset.explaInitialize() 
-        self.init_worldstate_belief, self.init_worldstate_state = convert_object_belief_to_histogram(self.init_worldstate_belief)
+        self.init_worldstate_belief, self.init_worldstate_state, self.observation_prob = convert_object_belief_to_histogram(self.init_worldstate_belief)
         
-        title = "sensor-notif"
-        title = title.split("-")
+        '''
+        ### remove sensor title
+        self.sensor_title = "sensor-notif"
+        self.sensor_title = self.sensor_title.split("-")
 
-        init_sensor_state_val = ObjectAttrAndLangState(title[0], {title[1]: None})
+        init_sensor_state_val = ObjectAttrAndLangState(self.sensor_title[0], {self.sensor_title[1]: None})
         self.init_sensor_state = {}
-        self.init_sensor_state["-".join(title)] = init_sensor_state_val
+        self.init_sensor_state["-".join(self.sensor_title)] = init_sensor_state_val
         init_sensor_hist = {}
         self.init_sensor_belief = defaultdict(pomdp_py.Histogram)
         init_sensor_hist[init_sensor_state_val] = 1
-        self.init_sensor_belief["-".join(title)] = pomdp_py.Histogram(init_sensor_hist)
-
-        # self.init_sensor_state = ObjectAttrAndLangState("sensor", {"notif": None})
-        # self.init_explaset_state = ObjectAttrAndLangState("explaset", {"None":1} ) 
+        self.init_sensor_belief["-".join(self.sensor_title)] = pomdp_py.Histogram(init_sensor_hist)
+        '''
         
         self._step_dict = ['use_soap', 'rinse_hand', 'turn_on_faucet_1', 'turn_off_faucet_1', 'dry_hand', 'switch_on_kettle_1', 'switch_off_kettle_1', 'add_water_kettle_1', 'get_cup_1', 'open_tea_box_1', 'add_tea_cup_1', 'close_tea_box_1', 'add_water_cup_1', 'open_coffee_box_1', 'add_coffee_cup_1', 'close_coffee_box_1', 'drink']
         self.init_explaset_hist = {}
         self.init_explaset_belief = defaultdict(pomdp_py.Histogram)
         
-        explaset_title = "explaset-action"
-        explaset_title = explaset_title.split("-")
-        init_explaset_state_val = ObjectAttrAndLangState(explaset_title[0], {explaset_title[1]:None})
+        self.explaset_title = "explaset-action" ##stores the actual sensor notification
+        self.explaset_title = self.explaset_title.split("-")
+        init_explaset_state_val = ObjectAttrAndLangState(self.explaset_title[0], {self.explaset_title[1]:[]})
         self.init_explaset_state ={}
-        self.init_explaset_state["-".join(explaset_title)] = init_explaset_state_val
+        self.init_explaset_state["-".join(self.explaset_title)] = init_explaset_state_val
         self.init_explaset_hist[init_explaset_state_val] = 1
         
-        question_title = "language-indexQuestionAsked"
-        question_title = question_title.split("-")
-        init_question_asked_state_val = ObjectAttrAndLangState(question_title[0],{question_title[1]:None} ) 
+        self.question_title = "language-indexQuestionAsked"
+        self.question_title = self.question_title.split("-")
+        init_question_asked_state_val = ObjectAttrAndLangState(self.question_title[0],{self.question_title[1]:None} ) 
         self.init_question_asked_state ={}
-        self.init_question_asked_state["-".join(question_title)] =  init_question_asked_state_val
+        self.init_question_asked_state["-".join(self.question_title)] =  init_question_asked_state_val
         self.init_question_asked_hist = {}
         self.init_question_asked_hist[init_question_asked_state_val] = 1
         self.init_question_asked_belief =defaultdict(pomdp_py.Histogram)
 
         for step in self._step_dict:
             # obj_id = "action_"+ step
-            self.init_explaset_hist[ObjectAttrAndLangState(explaset_title[0], {explaset_title[1]:step})] = 0 
-            self.init_question_asked_hist[ObjectAttrAndLangState(question_title[0],{explaset_title[1]:step} )] = 0  
-        self.init_explaset_belief["-".join(explaset_title)] = pomdp_py.Histogram(self.init_explaset_hist)
-        self.init_question_asked_belief["-".join(question_title)] = pomdp_py.Histogram(self.init_question_asked_hist)
+            self.init_explaset_hist[ObjectAttrAndLangState(self.explaset_title[0], {self.explaset_title[1]:step})] = 0 
+            self.init_question_asked_hist[ObjectAttrAndLangState(self.question_title[0],{self.question_title[1]:step} )] = 0  
+        self.init_explaset_belief["-".join(self.explaset_title)] = pomdp_py.Histogram(self.init_explaset_hist)
+        self.init_question_asked_belief["-".join(self.question_title)] = pomdp_py.Histogram(self.init_question_asked_hist)
         
 
-        feedback_title = "language-feedback"
-        feedback_title = feedback_title.split("-")
+        self.feedback_title = "language-feedback"
+        self.feedback_title = self.feedback_title.split("-")
         self.init_feedback_state ={}
-        init_feedback_state_val = ObjectAttrAndLangState(feedback_title[0],{feedback_title[1]:None} ) 
-        self.init_feedback_state["-".join(feedback_title)] =  init_feedback_state_val
+        init_feedback_state_val = ObjectAttrAndLangState(self.feedback_title[0],{self.feedback_title[1]:None} ) 
+        self.init_feedback_state["-".join(self.feedback_title)] =  init_feedback_state_val
         
         # self.init_feedback_state = ObjectAttrAndLangState("language", {"feedback":None})
         self.init_feedback_hist = {}
@@ -101,19 +104,21 @@ class Tracking_Engine(object):
         self.init_feedback_hist[init_feedback_state_val] = 1
         self.init_feedback_hist[ObjectAttrAndLangState("language", {"feedback":"yes"})] = 0 
         self.init_feedback_hist[ObjectAttrAndLangState("language", {"feedback":"no"})] = 0 
-        self.init_feedback_belief["-".join(feedback_title)] = pomdp_py.Histogram(self.init_feedback_hist)
+        self.init_feedback_belief["-".join(self.feedback_title)] = pomdp_py.Histogram(self.init_feedback_hist)
         
         
         # max(self.explaset._action_posterior_prob, key=self.explaset._action_posterior_prob.get)
         #  max(obj_state_dict, key=obj_state_dict.get)
         #{objid: object_state}
-        self.init_state = HTNCoachDialState({**self.init_worldstate_state, **self.init_explaset_state, **self.init_sensor_state, **self.init_feedback_state, **self.init_question_asked_state})
+        htn_explaset = None
+        self.init_state = HTNCoachDialState(None, {**self.init_worldstate_state, **self.init_explaset_state, **self.init_feedback_state, **self.init_question_asked_state})
         
         #{object_state:prob}
-        self.init_belief = HTNCoachDialBelief( {**self.init_worldstate_belief, **self.init_sensor_belief, **self.init_explaset_belief, **self.init_feedback_belief, **self.init_question_asked_belief})
+        self.init_belief = HTNCoachDialBelief( {**self.init_worldstate_belief, **self.init_explaset_belief, **self.init_feedback_belief, **self.init_question_asked_belief})
         self.init_belief.htn_explaset_action_posterior = self.explaset.action_posterior
-        self.HTNCoachDial_problem = HTNCoachDial(0.15,  # observation noise
-                                   self.init_belief)
+        # self.observation_prob = {}
+        self.HTNCoachDial_problem = HTNCoachDial(  # observation noise
+                                   self.init_state, self.init_belief, self._output_file_name, self.observation_prob)
         # self.HTNCoachDial_problem.agent.set_belief(self.init_belief, prior  = True)
         ##initial belief decides the state. Sample from the belief.
         print("\n** Testing POUCT **")
@@ -125,7 +130,25 @@ class Tracking_Engine(object):
         # test_planner(self.HTNCoachDial_problem, pouct, nsteps=1, debug_tree=False)
         # TreeDebugger(self.HTNCoachDial_problem.agent.tree).pp
 
-            
+    def update_true_state(self, state, new_value_dict):
+        obj_name = new_value_dict['object']
+        attr_name = new_value_dict['attribute']
+        val = new_value_dict['obj_att_value']
+
+        key = "-".join([obj_name, attr_name])
+        # state[key].__setitem__(attr_name, val)  
+        old_objectstate = state.get_object_state(key)
+
+        if key == "-".join(self.explaset_title):
+            state.append_object_attribute(key, attr_name, val)
+            # old_objectstate.__setitem__('attr_val', val)
+        elif not key in ["-".join(self.explaset_title), "-".join(self.question_title), "-".join(self.feedback_title)]:
+            old_objectstate.__setitem__('attr_val', val)
+        else:
+            old_objectstate.__setitem__(attr_name, val)
+        # state.set_object_state(key, new_objectstate)
+        return
+    
     def start(self):
         print()
         print("the engine has been started...")
@@ -139,25 +162,34 @@ class Tracking_Engine(object):
         total_discounted_reward = 0
         index=0
         #always iterate
-        while(notif._notif.qsize()>0):
-            step = notif.get_one_notif()
-            notif.delete_one_notif()
+        prev_step = None
+        action = None
+
+        while not self.HTNCoachDial_problem.hs.real_check_terminal_state():
+        # while(notif._notif.qsize()>0):
+            self.HTNCoachDial_problem.hs.clear_mcts_history()
+            step, sensor_notification = self.HTNCoachDial_problem.hs.curr_step(prev_step, action, real_step = True)
+            self.HTNCoachDial_problem.hs.curr_step(prev_step, action)
+            # step = notif.get_one_notif()
+            # notif.delete_one_notif()
 
             
             #if no notification, and the random prob is less than no_notif_trigger_prob, sleep the engine
-            if step == "none" and random.random()<self._no_trigger:
+            rand_ = random.random()
+            if rand_<self._no_trigger:
                 time.sleep(self._sleep_interval)
                 
             #go through the engine logic
             else:
                 if step != "none":
-                    sensor_notification = copy.deepcopy(realStateANDSensorUpdate(step, self._output_file_name))
+                    # sensor_notification = copy.deepcopy(realStateANDSensorUpdate(step, self._output_file_name))
                     
                     exp.setSensorNotification(sensor_notification)
                       
                 # posterior
                 otherHappen, observation_prob = exp.action_posterior()
                 
+                #TODO: self.HTNCoachDial_problem.agent.observation_model.set_lang_objattrs_prob(observation_prob)
                 
                 # wrong step detect
                 if otherHappen > self._other_happen:
@@ -176,6 +208,7 @@ class Tracking_Engine(object):
                     # belief state update
                     state = State()
                     state.update_state_belief(exp)
+                    ## TODO: user the above function to update belief over the state.
                     
                     # input step continues an ongoing goal
                     # include recognition and planning 
@@ -190,11 +223,30 @@ class Tracking_Engine(object):
                 
                 #output PROB and PS in a file
                 exp.print_explaSet()
+
+                ## change true state of the environment 
+                #  {**self.init_worldstate_state, **self.init_explaset_state, **self.init_sensor_state, **self.init_feedback_state, **self.init_question_asked_state})
+        
+                # self.HTNCoachDial_problem.env.set_htn_explaset(self.HTNCoachDial_problem.env.state, exp)
+                # self.HTNCoachDial_problem.env.state.set_htn_explaset(exp)
+                self.HTNCoachDial_problem.agent.cur_belief.set_htn_explaset(exp)
+                # self.HTNCoachDial_problem.env.state.get_object_state()
+                self.update_true_state(self.HTNCoachDial_problem.env.state, sensor_notification[0])## update world state,
+                # attribute =  self.explaset_title[1]
+                # self.explaset_title = "-".join(self.explaset_title)
+                explaset_state_dict = {"object":self.explaset_title[0], "attribute": self.explaset_title[1] , "obj_att_value": step}
+                self.update_true_state(self.HTNCoachDial_problem.env.state, explaset_state_dict)## update explaset action which stores the current sensor (TODO: MAYBE remove sensor state)
+
+                # TODO: update feedback and question asked from previous loop which is None for the first time.
+
                 
-                total_reward, total_discounted_reward = planner_one_loop(self.HTNCoachDial_problem, self.pouct, nsteps=1, debug_tree=False,  total_reward = total_reward, total_discounted_reward = total_discounted_reward, i=index)
+                # self.init_explaset_state
+
+                print("going to plan")
+                total_reward, total_discounted_reward = planner_one_loop(self.HTNCoachDial_problem, self.pouct, nsteps=1, debug_tree=False,  total_reward = total_reward, total_discounted_reward = total_discounted_reward, i=index, true_state = step, prob_lang =self._p_l)
                 TreeDebugger(self.HTNCoachDial_problem.agent.tree).pp
                 index+=1
-                print("go into the next loop")
+                print("go into next loop", index)
                 print()
                 print()
         '''

@@ -35,7 +35,7 @@ if __name__ == '__main__':
     ############                global variables                ######################
     #######################################################
     #if there is no notification, the engine still should run the whole update process if the generated random is bigger than no_notif_trigger_prob
-    no_notif_trigger_prob = 0.5
+    no_notif_trigger_prob = 0.01
  
     #sleep interval  
     interval = 1
@@ -61,7 +61,7 @@ if __name__ == '__main__':
 
     sensor_reliability = [0.99,0.95, 0.9, 0.8, 0.7, 0.6]
     # sensor_reliability = [0.7, 0.6]
-    # sensor_reliability = [0.99]
+    sensor_reliability = [0.99]
     # sensor_reliability = [0.8]
     # sensor_reliability = [0.5, 0.8]
     # sensor_reliability = [0.8]
@@ -69,7 +69,7 @@ if __name__ == '__main__':
     #sensor_reliability = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
     #6,10
     #nohup running 6,7
-    for file_num in range(4,5):
+    for file_num in range(7,8):
         # if file_num == 9:
         #     sensor_reliability = [0.99]
         for x in sensor_reliability:
@@ -86,7 +86,7 @@ if __name__ == '__main__':
             
             ##each test case run 20 times range(1,21)
             print("changeing iterations")
-            for repeat in range(1,21):
+            for repeat in range(1,2):
                 print("repeating step number", repeat, x)
                 db.method.drop()
                 db.state.drop()

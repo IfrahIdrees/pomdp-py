@@ -681,8 +681,9 @@ cpdef sample_explict_models(TransitionModel T, ObservationModel O, RewardModel R
         # sample observation at the end, where action is the last action.
         # (doesn't quite make sense to just use option as the action at this point.)
     else:
-        print("sample state and reward")
+        print("sample next state)
         next_state = T.sample(state, action)
+        print("passing next state to reward")
         reward = R.sample(state, action, next_state)
         nsteps += 1
     if O is not None:

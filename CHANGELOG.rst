@@ -3,12 +3,21 @@ Changelog
 
 Best viewed on `the website <https://h2r.github.io/pomdp-py/html/changelog.html>`_.
 
+(02/05/2022):
+---------------------------
+Added in tracking engine the code to call one_planner
+Added separate MCTS queeues in simulator and human_simulator
+Changed HTNCoachdial state, belief to include explaset, pobservation to be perfect language
+Added mcts sensor database
+TODO: need to make copy of exp set and perform action on in during transition model.
+
 (28/03/2021)
 -------------------------
 Added code to handle random baseline
 Incorporated latest math update code in explaset, main and tracking engine
 Added HTNobservational mdoel but not tested it.
 Added print statement to pouct and basics
+
 
 Version 1.3.1 (11/03/2021)
 -------------------------
