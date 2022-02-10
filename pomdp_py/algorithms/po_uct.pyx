@@ -302,9 +302,11 @@ cdef class POUCT(Planner):
         while True:
             ## Note: the tree node with () history will have
             ## the init belief given to the agent.
+            print("going to sample from belief")
             state = self._agent.sample_belief()
             self._simulate(state, self._agent.history, self._agent.tree,
                            None, None, 0)
+            print("simulation finished")
             sims_count +=1
             time_taken = time.time() - start_time
 
@@ -314,6 +316,7 @@ cdef class POUCT(Planner):
                 else:
                     pbar.n = time_taken
                 pbar.refresh()
+                print("refreshing bar")
 
             if stop_by_sims:
                 if sims_count >= self._num_sims:
@@ -335,6 +338,7 @@ cdef class POUCT(Planner):
                     State state, tuple history, VNode root, QNode parent,
                     Observation observation, int depth):
         if depth > self._max_depth:
+            ## print("Simulation depth is greater than max depth")
             return 0
         if root is None:
             if self._agent.tree is None:
@@ -380,14 +384,14 @@ cdef class POUCT(Planner):
 
         while depth < self._max_depth:
             action = self._rollout_policy.rollout(state, history)
-            print("here in rollout model")
+            ## print("here in rollout model")
             next_state, observation, reward, nsteps = sample_generative_model(self._agent, state, action)
             history = history + ((action, observation),)
             depth += nsteps
             total_discounted_reward += reward * discount
             discount *= (self._discount_factor**nsteps)
             state = next_state
-        print("Max depth reached")
+        ## print("Max depth reached")
         return total_discounted_reward
 
     cpdef Action _ucb(self, VNode root):

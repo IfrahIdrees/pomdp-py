@@ -3,6 +3,19 @@ Changelog
 
 Best viewed on `the website <https://h2r.github.io/pomdp-py/html/changelog.html>`_.
 
+(02/10/2022):
+--------------------------
+Added global variables to config.py
+Removed separate mcts sensor notifs queue into one real and mcts in the state variable
+Added separate log file mechanism for mcts and reward files 
+Added step index in the state
+CHanged check_terminal and curr_step to include step_index
+Added explaset transition in transition function so question can be asked accordingly.
+Updated htn_explaset in the belief
+Added update belief function
+
+
+
 (02/05/2022):
 ---------------------------
 Added in tracking engine the code to call one_planner

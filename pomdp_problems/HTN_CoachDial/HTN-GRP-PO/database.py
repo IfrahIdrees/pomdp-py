@@ -36,7 +36,9 @@ class DB_Object(object):
         self._state = db.state
         self._sensor = db.sensor
         self._Rstate = db.Rstate
-        self._mcts_sensor = db.mcts_sensor
+        # self._mcts_sensor = db.mcts_sensor
+        self._backup_state = db.backup_state
+        self._backup_sensor = db.backup_sensor
     ####################################################################################
     ####                        method related functions                            ####
     ####################################################################################    
@@ -168,11 +170,12 @@ class DB_Object(object):
     # "False": No, "True": Yes
     def update_sensor_value(self, ob_name, attri_name, value, real_step = False):
         label = False
-        if real_step:
-            sensor = list(self._sensor.find({"ob_name":ob_name, "attri_name":attri_name}))
-        else:
-            sensor = list(self._mcts_sensor.find({"ob_name":ob_name, "attri_name":attri_name}))
+        # if real_step:
+        #     sensor = list(self._sensor.find({"ob_name":ob_name, "attri_name":attri_name}))
+        # else:
+        #     sensor = list(self._mcts_sensor.find({"ob_name":ob_name, "attri_name":attri_name}))
         
+        sensor = list(self._sensor.find({"ob_name":ob_name, "attri_name":attri_name}))
         if len(sensor)!=1:
             print("inside udpate_sensor_value, the number of target ob_name is bad", len(sensor))
             sys.exit(0)

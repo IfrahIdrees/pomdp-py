@@ -29,7 +29,7 @@ import math
 db = DB_Object()
 
 class explaSet(object):
-    def __init__(self, cond_satisfy = 1.0, cond_notsatisfy = 0.0, delete_trigger = 0.001, non_happen = 0.0001, output_file_name = "Case4.txt"):
+    def __init__(self, cond_satisfy = 1.0, cond_notsatisfy = 0.0, delete_trigger = 0.001, non_happen = 0.0001, output_file_name = "Case4.txt", mcts_output_filename = "mcts_Case4.txt"):
         self._cond_satisfy = cond_satisfy
         self._cond_notsatisfy = cond_notsatisfy
         self._delete_trigger = delete_trigger
@@ -42,6 +42,8 @@ class explaSet(object):
         self._language_notification = []
         self.highest_action_PS = []
         self.otherHappen = None
+        self._mcts_output_filename = mcts_output_filename
+        self.mcts_step_index = -1
     
     ##################################################################################################    
     ####                                        Part I                                           #####
@@ -87,6 +89,10 @@ class explaSet(object):
             f.write(str(len(self._explaset)) + "\n")
             #f.write('{:>12}'.format(str(len(self._explaset))))
             #f.write('\n')
+
+    def mcts_print_explaSet(self):
+        with open(self._mcts_output_filename, 'a') as f:
+            f.write(str(len(self._explaset)) + "\n")
     
     # write the explanation into a .txt file
     def print_explaSet1(self):
@@ -223,7 +229,7 @@ class explaSet(object):
         #'''
         #---------------------------------
         ## previous code sets prior over the nexxt pending task to be done p(at)
-        print("Start of iteration, prior is", self._action_posterior_prob)
+        print("Start of iteration, prior is", self._action_posterior_prob, file=sys.stderr)
         self._prior = copy.deepcopy(self._action_posterior_prob)
             
     def action_posterior(self):

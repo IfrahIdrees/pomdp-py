@@ -47,6 +47,7 @@ from helper import *
 from env import *
 db = DB_Object()
 import config
+from State import *
 # import copy
 # from ExplaSet import *
 # class TigerState(pomdp_py.State):
@@ -97,7 +98,8 @@ class ObjectAttrAndLangState(pomdp_py.ObjectState):
     #     return self.attributes['objects_found']
 
 class HTNCoachDialState(pomdp_py.OOState):
-    def __init__(self, htn_explaset, object_states):
+    def __init__(self, step_index, htn_explaset, object_states):
+        self.step_index = step_index
         self.htn_explaset = htn_explaset
         super().__init__(object_states)
     # def object_pose(self, objid):
@@ -109,7 +111,7 @@ class HTNCoachDialState(pomdp_py.OOState):
     #     return {objid:self.object_states[objid]['pose']
     #             for objid in self.object_states}
     def __str__(self):
-        return 'HTNCoachDialState%s' % (str(self.object_states))
+        return 'HTNCoachDialState:%s,%s' % (str(self.step_index), str(self.object_states))
     def __repr__(self):
         return str(self)
     def append_object_attribute(self, objid, attr, new_val):
@@ -117,6 +119,9 @@ class HTNCoachDialState(pomdp_py.OOState):
         attr_val_list.append(new_val)
     def set_htn_explaset(self,explaset):
         self.htn_explaset = explaset
+        return
+    def set_step_index(self, step_index):
+        self.step_index = step_index
         return
 
 
@@ -552,7 +557,7 @@ class TransitionModel(pomdp_py.TransitionModel):
         # next_state = HTNCoachDialState()
         # get_object_state(self, objid)
         # print("state", state)
-        if self.human_simulator.mcts_check_terminal_state():
+        if self.human_simulator.mcts_check_terminal_state(state.step_index):
             return state
         if action.name == "ask-clarification-question":
             question_asked = action.update_question_asked(state)
@@ -568,8 +573,51 @@ class TransitionModel(pomdp_py.TransitionModel):
         explaset_title = config.explaset_title
         explaset_title_split = explaset_title.split("-")
         sensor_state = state.get_object_state(explaset_title)
-        step,_ = self.human_simulator.curr_step(sensor_state.attributes[explaset_title_split[1]], action.name)
+        # step, sensor_notification = self.human_simulator.curr_step(sensor_state.attributes[explaset_title_split[1]][-1], action.name)
+        step_index, step, sensor_notification = self.human_simulator.curr_step(state.step_index, action.name)
         state.append_object_attribute(explaset_title, explaset_title_split[1], step)
+        state.step_index = step_index
+        ## set explanation
+        exp = state.htn_explaset
+        exp.setSensorNotification(sensor_notification)
+        otherHappen, observation_prob = exp.action_posterior()
+
+        '''Executing transition of exp'''
+        if otherHappen > config._other_happen:
+                    # wrong step handling
+            print("action posterior after bayseian inference is",  exp._action_posterior_prob)
+            exp.handle_exception()
+            
+        # correct step procedure
+        else:
+            print("updating explaset")
+            length = len(exp._explaset)
+            
+            # input step start a new goal (bottom up procedure to create ongoing status)
+            # include recognition and planning
+            exp.explaSet_expand_part1(length)
+
+            # belief state update
+            world_state = State()
+            world_state.update_state_belief(exp)
+            ## TODO: user the above function to update belief over the state.
+            
+            # input step continues an ongoing goal
+            # include recognition and planning 
+            exp.explaSet_expand_part2(length)
+            
+
+                    
+        exp.pendingset_generate()
+        
+        # compute goal recognition result PROB and planning result PS
+        exp.task_prob_calculate()
+        
+        #output PROB and PS in a file
+        # exp.print_explaSet()
+        exp.mcts_print_explaSet()
+        state.set_htn_explaset(exp)
+
 
         # TODO: transition explaset
         # sensor_state.attributes[explaset_title_split[1]] =  
@@ -638,7 +686,7 @@ class RewardModel(pomdp_py.RewardModel):
             return 10
         elif action.name == "wait":
             return -1
-        elif action.name == "ask-clarification-question" and sensor_notification == question_asked:
+        elif action.name == "ask-clarification-question" and sensor_notification[-2] == question_asked:
             return 5
         else:
             return -5 #-100s
@@ -705,6 +753,7 @@ class HTNCoachDialBelief(pomdp_py.OOBelief):
             (includes robot)
         """
         # self.robot_id = robot_id
+        self.step_index = -1
         self.htn_explaset  = None
         super().__init__(object_beliefs)
 
@@ -712,12 +761,19 @@ class HTNCoachDialBelief(pomdp_py.OOBelief):
         return HTNCoachDialState(pomdp_py.OOBelief.mpe(self, **kwargs).object_states)
 
     def random(self, **kwargs):
-        object_states = pomdp_py.OOBelief.random(self, **kwargs).object_states
-        return HTNCoachDialState(self.htn_explaset, pomdp_py.OOBelief.random(self, **kwargs).object_states)
+        # TODO: reset MCTS environment
+        object_states = copy.deepcopy(pomdp_py.OOBelief.random(self, **kwargs).object_states)
+        return HTNCoachDialState(self.step_index,copy.deepcopy(self.htn_explaset), object_states)
 
     def set_htn_explaset(self,explaset):
-        self.htn_explaset = explaset
+        self.htn_explaset = copy.deepcopy(explaset)
         return
+
+    def set_step_index(self,step_index):
+        self.step_index = copy.deepcopy(step_index)
+        return
+    
+    
 
 def convert_object_belief_to_histogram(init_worldstate_belief):
     '''Convert belief object to histogram dictionary'''
@@ -786,10 +842,37 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang):
     # print(HTNCoachDial_problem.agent.curr_belief, HTNCoachDial_problem.agent.observation_model,
                     # HTNCoachDial_problem.agent.transition_model)
     # pass
+    '''
+    In Past: Planner has planned and has chosen action.
+    we have gotten reward from the environment for that
+    and a real observation given the action. Now we need to update the belief of what we think 
+    1) prob of world state is copied, 
+    2) exp prob is updated based on language recived or not'''
+    # Todo: #update step index??
+    curr_belief = HTNCoachDial_problem.agent.cur_belief
+    ### update the world belief
+    worldstate_belief, _, _ = convert_object_belief_to_histogram(list(db._state.find()))
+    
+    for key, hist in worldstate_belief.items():
+        curr_belief.set_object_belief(key, hist)
+
+    
+    ### update exp prob
+    exp = curr_belief.htn_explaset
+    step_index = curr_belief.step_index
+    last_sensor_notification = HTNCoachDial_problem.env.human_simulator.return_step(step_index) 
+    if last_sensor_notification == exp.highest_action_PS[0]:
+        step = "Yes"
+    else:
+        step = "No"
+    # print("step is", step)
+
     if real_observation.get_lang_objattr(config.feedback_title) == None:
-        pass
+        exp.update_without_language_feedback(prob_lang)
+    else:
+        exp.update_with_language_feedback(step, exp.highest_action_PS, prob_lang)
 
-
+    return
 
 class HTNCoachDial(pomdp_py.POMDP):
     """
@@ -802,6 +885,7 @@ class HTNCoachDial(pomdp_py.POMDP):
         """init_belief is a Distribution."""
         
         self.hs = human_simulator(output_filename)
+        self.reward_output_filename = "Reward_"+ output_filename
         # self.hs.read_files()
         # self.hs.goal_selection()
 
@@ -857,22 +941,36 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=False, 
     # env_reward = HTNCoachDial_problem.env.reward_model.sample(HTNCoachDial_problem.env.state, action, None)
     # env_reward = HTNCoachDial_problem.environment_reward_model.sample(HTNCoachDial_problem.env.state, action, None)
     ##TODO: need env state variable in the coachdial probelm. update the state variable with true state info.
-    print("True state: %s" % true_state)
-    # print("True state: %s" % HTNCoachDial_problem.env.state)
-    print("Belief: %s" % str(HTNCoachDial_problem.agent.cur_belief))
-    print("Action: %s" % str(action))
-    print("Reward: %s" % str(env_reward))
+    with open(HTNCoachDial_problem.reward_output_filename, 'a') as f:
+        f.write("True state: %s" % true_state + "\n")
+        f.write("Belief: %s" % HTNCoachDial_problem.agent.cur_belief.__str__ + "\n")
+        f.write("Action: %s" % str(action) + "\n")
+        f.write("Reward: %s" % str(env_reward)+ "\n")
+
+    '''Print Statements'''
+    # print("True state: %s" % true_state)
+    # # print("True state: %s" % HTNCoachDial_problem.env.state)
+    # print("Belief: %s" % str(HTNCoachDial_problem.agent.cur_belief))
+    # print("Action: %s" % str(action))
+    # print("Reward: %s" % str(env_reward))
     total_reward += env_reward
     total_discounted_reward += env_reward * gamma
     gamma *= discount
-    print("Reward (Cumulative): %s" % str(total_reward))
-    print("Reward (Cumulative Discounted): %s" % str(total_discounted_reward))
+
+    with open(HTNCoachDial_problem.reward_output_filename, 'a') as f:
+        f.write("Reward (Cumulative): %s" % str(total_reward) + "\n")
+        f.write("Reward (Cumulative Discounted): %s" % str(total_discounted_reward) + "\n")
+
+        if isinstance(planner, pomdp_py.POUCT):
+            f.write("__num_sims__: %d" % planner.last_num_sims + "\n")
+            f.write("__plan_time__: %.5f" % planner.last_planning_time + "\n")
+            f.write("\n\n\n")
+        if isinstance(planner, pomdp_py.PORollout):
+            print("__best_reward__: %d" % planner.last_best_reward)
+    # print("Reward (Cumulative): %s" % str(total_reward))
+    # print("Reward (Cumulative Discounted): %s" % str(total_discounted_reward))
         
-    if isinstance(planner, pomdp_py.POUCT):
-            print("__num_sims__: %d" % planner.last_num_sims)
-            print("__plan_time__: %.5f" % planner.last_planning_time)
-    if isinstance(planner, pomdp_py.PORollout):
-        print("__best_reward__: %d" % planner.last_best_reward)
+    
         
     # Let's create some simulated real observation; Update the belief
     # Creating true observation for sanity checking solver behavior.

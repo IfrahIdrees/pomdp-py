@@ -31,7 +31,8 @@ class human_simulator(object):
         # self.prev_step = None
         self.start_action = {}
         self.read_files(TESTCASES_DIR)
-        self.mcts_step_index =  -1
+        ''' moving mcts step index from simulator to state '''
+        # self.mcts_step_index =  -1
         self.real_step_index = -1
         self.mcts_bool_wrong_actions = None
         self.real_bool_wrong_actions = None
@@ -90,7 +91,8 @@ class human_simulator(object):
             bool_wrong_actions = self.real_bool_wrong_actions
             # self.real_bool_wrong_actions = None
         else:
-            prev_step_index = self.mcts_step_index
+            prev_step_index = prev_step
+            # prev_step_index = self.mcts_step_index
             bool_wrong_actions = self.mcts_bool_wrong_actions
             # self.mcts_bool_wrong_actions = None
 
@@ -128,10 +130,10 @@ class human_simulator(object):
             print("simulation", prev_step_index, curr_step)
             a=1
         else:
-            self.mcts_step_index = prev_step_index
+            # self.mcts_step_index = prev_step_index
             sensor_notification = realStateANDSensorUpdate(curr_step, self.output_filename, real_step = False)
 
-        return curr_step, sensor_notification
+        return prev_step_index, curr_step, sensor_notification
         # pass
 
 
@@ -178,13 +180,16 @@ class human_simulator(object):
     def check_notif_queue_length(self):
         return self._notifs[self.index_test_case]._notif.qsize()
 
-    def mcts_check_terminal_state(self):
-        return self.mcts_step_index == (self._notifs[self.index_test_case]._notif.qsize() - 1)
+    def mcts_check_terminal_state(self, curr_state_step_index):
+        return curr_state_step_index == (self._notifs[self.index_test_case]._notif.qsize() - 1)
     
     def real_check_terminal_state(self):
         return self.real_step_index == (self._notifs[self.index_test_case]._notif.qsize() - 1)
     
     def clear_mcts_history(self):
-        self.mcts_step_index =  self.real_step_index
+        return self.real_step_index
+
+    def return_step(self, step):
+        return self._notifs[self.index_test_case].get_one_notif(step)
         
 

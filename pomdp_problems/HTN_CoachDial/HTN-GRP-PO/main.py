@@ -78,6 +78,7 @@ if __name__ == '__main__':
                 output_file_name = "Random_Case" + str(file_num) + "_" + str(x) + ".txt"
             else:
                 output_file_name = "Case" + str(file_num) + "_" + str(x) + ".txt"
+            mcts_output_filename = "MCTS"+ str(file_num) + "_" + str(x) + ".txt"
             ##input file name
             input_file_name = "../../../../TestCases/Case" + str(file_num)
 
@@ -93,6 +94,8 @@ if __name__ == '__main__':
                 db.operator.drop()
                 db.sensor.drop()
                 db.Rstate.drop()
+                db.backup_state.drop()
+                db.backup_sensor.drop()
                 sensor_command = ""
 
                 ##add config
@@ -101,12 +104,14 @@ if __name__ == '__main__':
                     os.system("mongoimport --db smart_homeRANDOM --collection state --drop --file ../KnowledgeBase/state.json")
                     os.system("mongoimport --db smart_homeRANDOM --collection operator --drop --file ../KnowledgeBase/operator.json")
                     os.system("mongoimport --db smart_homeRANDOM --collection Rstate --drop --file ../KnowledgeBase/realState.json")
+                    # db.backup_state.insertOne({});
                 else:
                     ##Some times those command do not work, add "--jsonArray" to the end of each command line
                     os.system("mongoimport --db smart_home3 --collection method --drop --file ../../../../KnowledgeBase/method.json")
                     os.system("mongoimport --db smart_home3 --collection state --drop --file ../../../../KnowledgeBase/state.json")
                     os.system("mongoimport --db smart_home3 --collection operator --drop --file ../../../../KnowledgeBase/operator.json")
                     os.system("mongoimport --db smart_home3 --collection Rstate --drop --file ../../../../KnowledgeBase/realState.json")
+                    # db.backup_state.insertOne({});
                     
                 # ##Some times those command do not work, add "--jsonArray" to the end of each command line
                 # os.system("mongoimport --db smart_home3 --collection method --drop --file ../../../../KnowledgeBase/method.json")
@@ -118,25 +123,25 @@ if __name__ == '__main__':
                 if config.RANDOM_BASELINE:
                     if x == None:
                         sensor_command = "mongoimport --db smart_homeRANDOM --collection sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
-                        mcts_sensor_command = "mongoimport --db smart_homeRANDOM --collection mcts_sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
+                        # mcts_sensor_command = "mongoimport --db smart_homeRANDOM --collection mcts_sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
                     else:
                         sensor_command = "mongoimport --db smart_homeRANDOM --collection sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor" + "_" + str(x) + ".json"
-                        mcts_sensor_command = "mongoimport --db smart_homeRANDOM --collection mcts_sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor" + "_" + str(x) + ".json"
+                        # mcts_sensor_command = "mongoimport --db smart_homeRANDOM --collection mcts_sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor" + "_" + str(x) + ".json"
                 
                 else:
                     if x == None:
                         sensor_command = "mongoimport --db smart_home3 --collection sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
-                        mcts_sensor_command = "mongoimport --db smart_home3 --collection mcts_sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
+                        # mcts_sensor_command = "mongoimport --db smart_home3 --collection mcts_sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
                     else:   
                         sensor_command = "mongoimport --db smart_home3 --collection sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor" + "_" + str(x) + ".json"
-                        mcts_sensor_command = "mongoimport --db smart_home3 --collection mcts_sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
+                        # mcts_sensor_command = "mongoimport --db smart_home3 --collection mcts_sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
 
                 # if x == None:
                 #     sensor_command = "mongoimport --db smart_home3 --collection sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
                 # else:
                 #     sensor_command = "mongoimport --db smart_home3 --collection sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor" + "_" + str(x) + ".json"
                 os.system(sensor_command)
-                os.system(mcts_sensor_command)
+                # os.system(mcts_sensor_command)
                 
                 ##command for sensor missing set up
                 '''
@@ -147,7 +152,7 @@ if __name__ == '__main__':
                 with open(output_file_name, 'a') as f:
                     f.write('\n========================\n')
   
-                tracking_engine = Tracking_Engine(no_trigger = no_notif_trigger_prob, sleep_interval = interval, cond_satisfy=cond_satisfy, cond_notsatisfy = cond_notsatisfy, delete_trigger = delete_trigger, otherHappen = other_happen, file_name = input_file_name, output_file_name = output_file_name)
+                tracking_engine = Tracking_Engine(no_trigger = no_notif_trigger_prob, sleep_interval = interval, cond_satisfy=cond_satisfy, cond_notsatisfy = cond_notsatisfy, delete_trigger = delete_trigger, otherHappen = other_happen, file_name = input_file_name, output_file_name = output_file_name, mcts_output_filename = mcts_output_filename)
                 tracking_engine.start()
                 print("here")
             

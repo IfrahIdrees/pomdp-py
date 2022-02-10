@@ -12,8 +12,9 @@ Research sponsored by AGEWELL Networks of Centers of Excellence (NCE).
 ################################################################################################
 
 from collections import defaultdict
-from os import EX_TEMPFAIL
+# from os import EX_TEMPFAIL
 import random
+from signal import set_wakeup_fd
 import time
 
 from pomdp_problems.multi_object_search.models.components import sensor
@@ -31,7 +32,7 @@ import config
 random.seed(10)
 
 class Tracking_Engine(object):
-    def __init__(self, no_trigger = 0, sleep_interval = 1, cond_satisfy=1.0, cond_notsatisfy = 0.0, delete_trigger = 0.001, non_happen = 0.00001, otherHappen = 0.75, file_name = "Case1", output_file_name = "Case1.txt"):
+    def __init__(self, no_trigger = 0, sleep_interval = 1, cond_satisfy=1.0, cond_notsatisfy = 0.0, delete_trigger = 0.001, non_happen = 0.00001, otherHappen = 0.75, file_name = "Case1", output_file_name = "Case1.txt", mcts_output_filename="mcts_case1.txt"):
         self._no_trigger = no_trigger
         self._sleep_interval = sleep_interval
         self._cond_satisfy = cond_satisfy
@@ -41,12 +42,27 @@ class Tracking_Engine(object):
         self._other_happen = otherHappen
         self._file_name = file_name
         self._output_file_name = output_file_name
+        # self.mcts_output_filename
+
+        '''setting varibale in config file '''
+        config._no_trigger = no_trigger
+        config._sleep_interval = sleep_interval
+        config._cond_satisfy = cond_satisfy
+        config._cond_notsatisfy = cond_notsatisfy
+        config._delete_trigger = delete_trigger
+        config._non_happen = non_happen
+        config._other_happen = otherHappen
+        config._file_name = file_name
+        config._output_file_name = output_file_name
+        config._mcts_output_filename = mcts_output_filename
+
+
         self._p_l = 0.95
 
         ##Pomdp object instantiation
         # self.init_belief = type('test', (), {})()
         self.init_worldstate_belief = list(db._state.find())
-        self.explaset = explaSet(cond_satisfy = self._cond_satisfy, cond_notsatisfy = self._cond_notsatisfy, delete_trigger = self._delete_trigger, non_happen = self._non_happen, output_file_name = self._output_file_name)
+        self.explaset = explaSet(cond_satisfy = self._cond_satisfy, cond_notsatisfy = self._cond_notsatisfy, delete_trigger = self._delete_trigger, non_happen = self._non_happen, output_file_name = self._output_file_name, mcts_output_filename = config._mcts_output_filename)
         self.explaset.explaInitialize() 
         self.init_worldstate_belief, self.init_worldstate_state, self.observation_prob = convert_object_belief_to_histogram(self.init_worldstate_belief)
         
@@ -111,7 +127,8 @@ class Tracking_Engine(object):
         #  max(obj_state_dict, key=obj_state_dict.get)
         #{objid: object_state}
         htn_explaset = None
-        self.init_state = HTNCoachDialState(None, {**self.init_worldstate_state, **self.init_explaset_state, **self.init_feedback_state, **self.init_question_asked_state})
+        step_index = -1
+        self.init_state = HTNCoachDialState(step_index, htn_explaset, {**self.init_worldstate_state, **self.init_explaset_state, **self.init_feedback_state, **self.init_question_asked_state})
         
         #{object_state:prob}
         self.init_belief = HTNCoachDialBelief( {**self.init_worldstate_belief, **self.init_explaset_belief, **self.init_feedback_belief, **self.init_question_asked_belief})
@@ -122,10 +139,11 @@ class Tracking_Engine(object):
         # self.HTNCoachDial_problem.agent.set_belief(self.init_belief, prior  = True)
         ##initial belief decides the state. Sample from the belief.
         print("\n** Testing POUCT **")
-        self.pouct = pomdp_py.POUCT(max_depth=3, discount_factor=0.95,
-                            num_sims=4096, exploration_const=50,
+        self.pouct = pomdp_py.POUCT(max_depth=10, discount_factor=0.95,
+                            num_sims=10, exploration_const=50,
                             rollout_policy=self.HTNCoachDial_problem.agent.policy_model,
                             show_progress=True)
+                            # num_sims=4096
         ##TODO: SHIFT THE TEST PLANNER
         # test_planner(self.HTNCoachDial_problem, pouct, nsteps=1, debug_tree=False)
         # TreeDebugger(self.HTNCoachDial_problem.agent.tree).pp
@@ -163,13 +181,15 @@ class Tracking_Engine(object):
         index=0
         #always iterate
         prev_step = None
+        step_index = -1
         action = None
 
         while not self.HTNCoachDial_problem.hs.real_check_terminal_state():
         # while(notif._notif.qsize()>0):
-            self.HTNCoachDial_problem.hs.clear_mcts_history()
-            step, sensor_notification = self.HTNCoachDial_problem.hs.curr_step(prev_step, action, real_step = True)
-            self.HTNCoachDial_problem.hs.curr_step(prev_step, action)
+            # self.HTNCoachDial_problem.hs.clear_mcts_history()
+            step_index,step, sensor_notification = self.HTNCoachDial_problem.hs.curr_step(step_index, action, real_step = True)
+            # TODO: see if mcts curr_step should be called.
+            # self.HTNCoachDial_problem.hs.curr_step(prev_step, action)
             # step = notif.get_one_notif()
             # notif.delete_one_notif()
 
@@ -228,8 +248,11 @@ class Tracking_Engine(object):
                 #  {**self.init_worldstate_state, **self.init_explaset_state, **self.init_sensor_state, **self.init_feedback_state, **self.init_question_asked_state})
         
                 # self.HTNCoachDial_problem.env.set_htn_explaset(self.HTNCoachDial_problem.env.state, exp)
-                # self.HTNCoachDial_problem.env.state.set_htn_explaset(exp)
+                # self.HTNCoachDial_problem.agent.cur_belief.set_step_index(self.HTNCoachDial_problem.hs.mcts_step_index)
+                self.HTNCoachDial_problem.agent.cur_belief.set_step_index(step_index)
                 self.HTNCoachDial_problem.agent.cur_belief.set_htn_explaset(exp)
+                self.HTNCoachDial_problem.env.state.set_htn_explaset(exp)
+                self.HTNCoachDial_problem.env.state.set_step_index(step_index)
                 # self.HTNCoachDial_problem.env.state.get_object_state()
                 self.update_true_state(self.HTNCoachDial_problem.env.state, sensor_notification[0])## update world state,
                 # attribute =  self.explaset_title[1]
@@ -242,13 +265,45 @@ class Tracking_Engine(object):
                 
                 # self.init_explaset_state
 
+                '''Need to make copy of db collections'''
+                # self._state = db.state
+                # self._sensor = db.sensor
+                # self._mcts_sensor = db.mcts_sensor
+                pipeline = [ {"$match": {}}, 
+                            {"$out": "backup_state"},
+                ]
+                db._state.aggregate(pipeline)
+
+                pipeline = [ {"$match": {}}, 
+                            {"$out": "backup_sensor"},
+                ]
+                db._sensor.aggregate(pipeline)
+
                 print("going to plan")
                 total_reward, total_discounted_reward = planner_one_loop(self.HTNCoachDial_problem, self.pouct, nsteps=1, debug_tree=False,  total_reward = total_reward, total_discounted_reward = total_discounted_reward, i=index, true_state = step, prob_lang =self._p_l)
                 TreeDebugger(self.HTNCoachDial_problem.agent.tree).pp
                 index+=1
+
+                '''Restoring the state for next iteration, env variable in HTNcoachproblem should be reset'''
+
+                pipeline = [ {"$match": {}}, 
+                            {"$out": "state"},
+                ]
+                db._backup_state.aggregate(pipeline)
+
+                pipeline = [ {"$match": {}}, 
+                            {"$out": "sensor"},
+                ]
+                db._backup_sensor.aggregate(pipeline)
+
+
                 print("go into next loop", index)
                 print()
                 print()
+        
+        # HTN
+        with open(self.HTNCoachDial_problem.reward_output_filename, 'a') as f:
+            f.write('\n========================\n')
         '''
         print
         print("the engine has been started...")
