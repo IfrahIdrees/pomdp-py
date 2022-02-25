@@ -3,6 +3,11 @@ Changelog
 
 Best viewed on `the website <https://h2r.github.io/pomdp-py/html/changelog.html>`_.
 
+(02/17/2022):
+--------------------------
+Todo: look at question asked transition update, [done] write log scripts for different configuration
+talk to kaiyu: about heuristic search and exploration constant
+
 (02/10/2022):
 --------------------------
 Added global variables to config.py
@@ -13,6 +18,8 @@ CHanged check_terminal and curr_step to include step_index
 Added explaset transition in transition function so question can be asked accordingly.
 Updated htn_explaset in the belief
 Added update belief function
+TODO: Make mcts and real one and updaye belief and environment setting
+
 
 
 

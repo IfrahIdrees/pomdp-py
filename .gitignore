@@ -141,5 +141,11 @@ Thumbs.db
 pomdp_problems/HTN_CoachDial/HTN-GRP-PO/belief_representation.py
 pomdp_problems/HTN_CoachDial/HTN-GRP-PO/env.py
 pomdp_problems/HTN_CoachDial/HTN-GRP-PO/*.txt
+pomdp_problems/HTN_CoachDial/logs
+pomdp_problems/HTN_CoachDial/outputs
+pomdp_problems/HTN_CoachDial/outputs
 
 pomdp_problems/rocksample/*.txt
+
+pomdp_problems/HTN_CoachDial/HTN-GRP-PO/D*
+

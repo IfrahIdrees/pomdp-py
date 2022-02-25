@@ -12,7 +12,7 @@ Research sponsored by AGEWELL Networks of Centers of Excellence (NCE).
 ####          The DB_Object class. Provide database communication interfaces                       ####
 ####          Also refer to "Interface specification part III"                                     ####
 #######################################################################################################
-
+# // from pomdp_problems.HTNcoachDial.database cimport DB_Object
 import sys
 sys.dont_write_bytecode = True
 from pymongo import MongoClient
@@ -27,7 +27,7 @@ if config.RANDOM_BASELINE:
     db = client.smart_homeRANDOM
 else:
     client = MongoClient()
-    db = client.smart_home3
+    db = client.smart_home5
 
 class DB_Object(object):
     def __init__(self):
@@ -186,6 +186,7 @@ class DB_Object(object):
         else:
             sensor = sensor[0]
             randomN = random.random()
+            # print("randomN:",randomN, sensor["reliability"])
             if(randomN<=sensor["reliability"]):
                 label = True
                 valueNum = sensor["value"][1]

@@ -17,6 +17,7 @@ sys.dont_write_bytecode = True
 import copy
 from collections import deque
 from database import *
+# from pomdp_problems.HTNcoachDial.database import *
 from Explanation import *
 from helper import *
 from TaskHint import *
@@ -229,10 +230,10 @@ class explaSet(object):
         #'''
         #---------------------------------
         ## previous code sets prior over the nexxt pending task to be done p(at)
-        print("Start of iteration, prior is", self._action_posterior_prob, file=sys.stderr)
+        # print("Start of iteration, prior is", self._action_posterior_prob, file=sys.stderr)
         self._prior = copy.deepcopy(self._action_posterior_prob)
             
-    def action_posterior(self):
+    def action_posterior(self, execute=False):
         # #calaculate posterior action for every low_level action in pending set
         # # self._action_posterior_prob = {}
         # # otherHappen = 1
@@ -274,6 +275,7 @@ class explaSet(object):
 
         self.highest_action_PS = highest_action_PS
         plang_st = 0
+        observation_prob = {}
         for k in self._action_posterior_prob: 
             posteriorK, observation_prob = self.cal_posterior(k) #p(obs| st-1, at) since sum over st-1 so PosteriorK returns p(obst|at)
             
@@ -291,9 +293,12 @@ class explaSet(object):
 
         #nothing
         ##sensor, did you right now do this, yes (formulation ask question about current step)
-
-        with open(self._output_file_name, 'a') as f:
-            f.write(str(round(otherHappen, 4)) + "\t")
+        if execute:
+            with open(self._output_file_name, 'a') as f:
+                f.write(str(round(otherHappen, 4)) + "\t")
+        else:
+            with open(self._mcts_output_filename, 'a') as f:
+                f.write(str(round(otherHappen, 4)) + "\t")
 
         ##@II
         self.otherHappen = otherHappen
@@ -385,7 +390,10 @@ class explaSet(object):
                 new_prob_1 = new_prob_1 + p[0]
                 new_prob_2 = new_prob_2 + p[1]
                 # print(new_prob_1, new_prob_2)       
-        return float(new_prob_1)/(new_prob_1+new_prob_2) #p(obs| st-1, at) #p(turnonfaucet | nothing, turn_on_faucet) p(obser | nothing, switch on kettle)
+        try:
+            return float(new_prob_1)/(new_prob_1+new_prob_2) #p(obs| st-1, at) #p(turnonfaucet | nothing, turn_on_faucet) p(obser | nothing, switch on kettle)
+        except ZeroDivisionError:
+            return 0
         # return float(new_prob_1)
         # /(new_prob_1+new_prob_2) #p(obs| st-1, at) #p(turnonfaucet | nothing, turn_on_faucet) p(obser | nothing, switch on kettle)
         
@@ -505,7 +513,7 @@ class explaSet(object):
         
         for i in range(length):
             x =   self.get(i+1) ##x is prior for the pending step
-            print("action posterior after bayseian inference is",  self._action_posterior_prob)
+            # print("action posterior after bayseian inference is",  self._action_posterior_prob)
             for action in self._action_posterior_prob:
                 #case1: nothing happened: update the prob of the explanation,do not need to update tree structure. 
                 if action == "nothing":
@@ -554,19 +562,19 @@ class explaSet(object):
                     # taskNet_._expandProb *= 0.01
                     # expla._prob*=0.01
                     continue
-                if highest_action_PS[0] == ExecuteSequence[-1] and step == 'Yes':
+                if highest_action_PS[0] == ExecuteSequence[-1] and step == 'yes':
                     correct_taskNets+=1
                     # taskNet_._expandProb *= 0.99 
                     # expla._prob*=0.99
-                elif not (highest_action_PS[0] == ExecuteSequence[-1]) and step == 'Yes':
+                elif not (highest_action_PS[0] == ExecuteSequence[-1]) and step == 'yes':
                     # taskNet_._expandProb *= 0.01
                     # expla._prob*=0.01
                     continue
-                elif step == 'No' and  not (highest_action_PS[0] == ExecuteSequence[-1]):
+                elif step == 'no' and  not (highest_action_PS[0] == ExecuteSequence[-1]):
                     correct_taskNets+=1
                     # taskNet_._expandProb *= 0.99
                     # expla._prob*=0.99
-                elif step == 'No' and  (highest_action_PS[0] == ExecuteSequence[-1]):
+                elif step == 'no' and  (highest_action_PS[0] == ExecuteSequence[-1]):
                     # taskNet_._expandProb *= 0.01
                     # expla._prob*=0.01
                     continue
@@ -636,7 +644,7 @@ class explaSet(object):
     ####            based on the current tree structure and belief state                         #####
     ##################################################################################################
 
-    def task_prob_calculate(self):
+    def task_prob_calculate(self, filename ):
         taskhint = TaskHint(self._output_file_name)
         taskhint.reset()
         for expla in self._explaset:
@@ -644,8 +652,8 @@ class explaSet(object):
 
         taskhint.average_level()
 
-        taskhint.print_taskhintInTable()
-        print("taskhint", taskhint.__dict__)   
+        taskhint.print_taskhintInTable(filename)
+        # print("taskhint", taskhint.__dict__)   
         return taskhint  
 
     ##################################################################################################    
@@ -665,7 +673,7 @@ class explaSet(object):
         self.belief_state_repair_execute(belief_state_repair_summary)
 
     def handle_exception(self):
-        print("into handle exception")
+        # print("into handle exception")
         sensor_cause = {}
         sensor_cause["bad_sensor"] = []
         sensor_cause["sensor_cause"] = False

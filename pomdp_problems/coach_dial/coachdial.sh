@@ -10,7 +10,7 @@
 # source ../../../env/bin/activate
 
 # Move to /playground/scripts
-cd ../../../pomdp-py/pomdp-problems/coach_dial
+# cd ../../../pomdp-py/pomdp-problems/coach_dial
 
 # Get parameters
 while getopts a:s:r:p:n: flag

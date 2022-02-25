@@ -44,6 +44,7 @@ import time
 import random
 import math
 from tqdm import tqdm
+from database import DB_Object
 
 cdef class TreeNode:
     def __init__(self):
@@ -207,6 +208,7 @@ cdef class POUCT(Planner):
         self._agent = None
         self._last_num_sims = -1
         self._last_planning_time = -1
+        ## self._db = DB_Object()
 
     @property
     def updates_agent_belief(self):
@@ -228,6 +230,7 @@ cdef class POUCT(Planner):
         cdef int sims_count
 
         self._agent = agent   # switch focus on planning for the given agent
+        # print("planning started")
         if not hasattr(self._agent, "tree"):
             self._agent.add_attr("tree", None)
         action, time_taken, sims_count = self._search()
@@ -302,11 +305,30 @@ cdef class POUCT(Planner):
         while True:
             ## Note: the tree node with () history will have
             ## the init belief given to the agent.
-            print("going to sample from belief")
+            # print("simulation restarting")
+
+            '''Restoring the state for next iteration, env variable in HTNcoachproblem should be reset'''
+            if self._db == None:
+                print("EXIT -DB IS NONE")
+            else:
+                pipeline = [ {"$match": {}}, 
+                            {"$out": "state"},
+                ]
+                self._db._backup_state.aggregate(pipeline)
+
+                pipeline = [ {"$match": {}}, 
+                            {"$out": "sensor"},
+                ]
+                self._db._backup_sensor.aggregate(pipeline)
+
             state = self._agent.sample_belief()
+            # print("sampled state from belief is", state)
+            # print("###########")
+            with open(self._mcts_output_filename , 'a') as f:
+                f.write('\n#####\n')
             self._simulate(state, self._agent.history, self._agent.tree,
                            None, None, 0)
-            print("simulation finished")
+            # print("simulation finished")
             sims_count +=1
             time_taken = time.time() - start_time
 
@@ -316,7 +338,7 @@ cdef class POUCT(Planner):
                 else:
                     pbar.n = time_taken
                 pbar.refresh()
-                print("refreshing bar")
+                # print("refreshing bar")
 
             if stop_by_sims:
                 if sims_count >= self._num_sims:
@@ -382,7 +404,7 @@ cdef class POUCT(Planner):
         cdef Observation observation
         cdef float reward
 
-        while depth < self._max_depth:
+        while depth < self._max_depth and not self._hs.check_terminal_state(state.step_index+1):
             action = self._rollout_policy.rollout(state, history)
             ## print("here in rollout model")
             next_state, observation, reward, nsteps = sample_generative_model(self._agent, state, action)

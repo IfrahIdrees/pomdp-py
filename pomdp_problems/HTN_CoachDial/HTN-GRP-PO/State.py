@@ -36,7 +36,7 @@ class State(object):
         result = self.get_attr_in_effect(exp)
         action_list = result[0]
         title = result[1]
-        print("Belief Update is:")
+        # print("Belief Update is:")
         for i, x in enumerate(title):
             att = db.get_object_attri(x[0], x[1])
             ## @II
@@ -45,7 +45,7 @@ class State(object):
 
             # for k,v in att.items():
             #     att[k] = pobs_s[k] * new_p[k]
-            print(title[i][0], title[i][1], att)
+            # print(title[i][0], title[i][1], att)
             db.update_state_belief(title[i][0], title[i][1], att)
 
     def cal_plang_att_action(self,att,i, exp, action_list, title):
@@ -145,7 +145,10 @@ class State(object):
             sump = sump +p            
 
         for x in newp:
-            newp[x] = newp[x]/sump
+            try:
+                newp[x] = newp[x]/sump
+            except ZeroDivisionError:
+                newp[x]=0
         return newp        
 
 

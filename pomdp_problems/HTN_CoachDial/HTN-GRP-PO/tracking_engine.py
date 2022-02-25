@@ -12,6 +12,7 @@ Research sponsored by AGEWELL Networks of Centers of Excellence (NCE).
 ################################################################################################
 
 from collections import defaultdict
+from math import gamma
 # from os import EX_TEMPFAIL
 import random
 from signal import set_wakeup_fd
@@ -30,9 +31,10 @@ import numpy as np
 from HTNCoachDial import *
 import config
 random.seed(10)
+from human_simulator import *
 
 class Tracking_Engine(object):
-    def __init__(self, no_trigger = 0, sleep_interval = 1, cond_satisfy=1.0, cond_notsatisfy = 0.0, delete_trigger = 0.001, non_happen = 0.00001, otherHappen = 0.75, file_name = "Case1", output_file_name = "Case1.txt", mcts_output_filename="mcts_case1.txt"):
+    def __init__(self, no_trigger = 0, sleep_interval = 1, cond_satisfy=1.0, cond_notsatisfy = 0.0, delete_trigger = 0.001, non_happen = 0.00001, otherHappen = 0.75, file_name = "Case1", output_file_name = "Case1.txt", mcts_output_filename="mcts_case1.txt", args = None, db_client = None):
         self._no_trigger = no_trigger
         self._sleep_interval = sleep_interval
         self._cond_satisfy = cond_satisfy
@@ -41,7 +43,8 @@ class Tracking_Engine(object):
         self._non_happen = non_happen
         self._other_happen = otherHappen
         self._file_name = file_name
-        self._output_file_name = output_file_name
+        self._output_file_name = args.log_dir+"/"+output_file_name
+        self._db_client = db_client
         # self.mcts_output_filename
 
         '''setting varibale in config file '''
@@ -53,8 +56,8 @@ class Tracking_Engine(object):
         config._non_happen = non_happen
         config._other_happen = otherHappen
         config._file_name = file_name
-        config._output_file_name = output_file_name
-        config._mcts_output_filename = mcts_output_filename
+        config._output_file_name = self._output_file_name
+        config._mcts_output_filename = args.log_dir+"/mcts/"+mcts_output_filename
 
 
         self._p_l = 0.95
@@ -62,7 +65,7 @@ class Tracking_Engine(object):
         ##Pomdp object instantiation
         # self.init_belief = type('test', (), {})()
         self.init_worldstate_belief = list(db._state.find())
-        self.explaset = explaSet(cond_satisfy = self._cond_satisfy, cond_notsatisfy = self._cond_notsatisfy, delete_trigger = self._delete_trigger, non_happen = self._non_happen, output_file_name = self._output_file_name, mcts_output_filename = config._mcts_output_filename)
+        self.explaset = explaSet(cond_satisfy = self._cond_satisfy, cond_notsatisfy = self._cond_notsatisfy, delete_trigger = self._delete_trigger, non_happen = self._non_happen, output_file_name = config._output_file_name, mcts_output_filename = config._mcts_output_filename)
         self.explaset.explaInitialize() 
         self.init_worldstate_belief, self.init_worldstate_state, self.observation_prob = convert_object_belief_to_histogram(self.init_worldstate_belief)
         
@@ -102,7 +105,8 @@ class Tracking_Engine(object):
 
         for step in self._step_dict:
             # obj_id = "action_"+ step
-            self.init_explaset_hist[ObjectAttrAndLangState(self.explaset_title[0], {self.explaset_title[1]:step})] = 0 
+            '''Not add rest of actions, explaset-action is now just a list of actions'''
+            # self.init_explaset_hist[ObjectAttrAndLangState(self.explaset_title[0], {self.explaset_title[1]:step})] = 0 
             self.init_question_asked_hist[ObjectAttrAndLangState(self.question_title[0],{self.question_title[1]:step} )] = 0  
         self.init_explaset_belief["-".join(self.explaset_title)] = pomdp_py.Histogram(self.init_explaset_hist)
         self.init_question_asked_belief["-".join(self.question_title)] = pomdp_py.Histogram(self.init_question_asked_hist)
@@ -134,15 +138,46 @@ class Tracking_Engine(object):
         self.init_belief = HTNCoachDialBelief( {**self.init_worldstate_belief, **self.init_explaset_belief, **self.init_feedback_belief, **self.init_question_asked_belief})
         self.init_belief.htn_explaset_action_posterior = self.explaset.action_posterior
         # self.observation_prob = {}
+        ##declare the hs
+        hs = human_simulator(config._output_file_name, config._mcts_output_filename)
+        
         self.HTNCoachDial_problem = HTNCoachDial(  # observation noise
-                                   self.init_state, self.init_belief, self._output_file_name, self.observation_prob)
+                                   self.init_state, self.init_belief, self.observation_prob, None,hs, args)
         # self.HTNCoachDial_problem.agent.set_belief(self.init_belief, prior  = True)
         ##initial belief decides the state. Sample from the belief.
         print("\n** Testing POUCT **")
-        self.pouct = pomdp_py.POUCT(max_depth=10, discount_factor=0.95,
-                            num_sims=10, exploration_const=50,
+        max_depth = args.maxsteps
+        num_sims= args.num_sims
+        discount_factor=args.d
+        exploration_const=args.e
+        self.pouct = pomdp_py.POUCT(max_depth=max_depth, discount_factor=discount_factor,
+                            num_sims=num_sims, exploration_const=exploration_const,
                             rollout_policy=self.HTNCoachDial_problem.agent.policy_model,
                             show_progress=True)
+        self.pouct._db = db
+        self.pouct._hs = self.HTNCoachDial_problem.hs
+        self.pouct._mcts_output_filename = config._mcts_output_filename 
+        # reward_output_filename = "D{}_S{}_DF{}_E{}".format(
+        #     max_depth,
+        #     num_sims,
+        #     discount_factor, 
+        #     exploration_const
+        # )
+        self.HTNCoachDial_problem.reward_output_filename = args.log_dir+"/reward/Reward_"+output_file_name
+        
+        print("Current Parameters are:", config._output_file_name)
+
+        with open(config._output_file_name, 'a') as f:
+            f.write('\n========================\n')
+
+        with open(config._mcts_output_filename , 'a') as f:
+            f.write('\n========================\n')
+
+        with open(self.HTNCoachDial_problem.reward_output_filename , 'a') as f:
+            f.write('\n========================\n')
+
+        #  "maxdepth_"+max_depth+"_df"+"Reward_"+ output_filename
+        
                             # num_sims=4096
         ##TODO: SHIFT THE TEST PLANNER
         # test_planner(self.HTNCoachDial_problem, pouct, nsteps=1, debug_tree=False)
@@ -173,8 +208,9 @@ class Tracking_Engine(object):
         print()
         
         notif = notification(self._file_name)   ##check the current notification
-        exp = explaSet(cond_satisfy = self._cond_satisfy, cond_notsatisfy = self._cond_notsatisfy, delete_trigger = self._delete_trigger, non_happen = self._non_happen, output_file_name = self._output_file_name)
-        exp.explaInitialize()  
+        # exp = explaSet(cond_satisfy = self._cond_satisfy, cond_notsatisfy = self._cond_notsatisfy, delete_trigger = self._delete_trigger, non_happen = self._non_happen, output_file_name = self._output_file_name)
+        # exp.explaInitialize()  
+        exp =  self.explaset
         
         total_reward = 0
         total_discounted_reward = 0
@@ -183,83 +219,95 @@ class Tracking_Engine(object):
         prev_step = None
         step_index = -1
         action = None
+        gamma = 1
 
-        while not self.HTNCoachDial_problem.hs.real_check_terminal_state():
-        # while(notif._notif.qsize()>0):
-            # self.HTNCoachDial_problem.hs.clear_mcts_history()
-            step_index,step, sensor_notification = self.HTNCoachDial_problem.hs.curr_step(step_index, action, real_step = True)
-            # TODO: see if mcts curr_step should be called.
-            # self.HTNCoachDial_problem.hs.curr_step(prev_step, action)
-            # step = notif.get_one_notif()
-            # notif.delete_one_notif()
 
+        '''Set the exp set and true state '''
+
+        step_index,step, sensor_notification = self.HTNCoachDial_problem.hs.curr_step(step_index, action, real_step = True)
+        # print("step index, sensor_notif is", step_index, sensor_notification)
+        # TODO: see if mcts curr_step should be called.
+        # self.HTNCoachDial_problem.hs.curr_step(prev_step, action)
+        # step = notif.get_one_notif()
+        # notif.delete_one_notif()
+
+        
+        #if no notification, and the random prob is less than no_notif_trigger_prob, sleep the engine
+        
+        if step != "none":
+            # sensor_notification = copy.deepcopy(realStateANDSensorUpdate(step, self._output_file_name))
             
-            #if no notification, and the random prob is less than no_notif_trigger_prob, sleep the engine
+            exp.setSensorNotification(sensor_notification)
+                
+        # posterior
+        otherHappen, observation_prob = exp.action_posterior(execute=True)
+        
+        #TODO: self.HTNCoachDial_problem.agent.observation_model.set_lang_objattrs_prob(observation_prob)
+        
+        # wrong step detect
+        if otherHappen > self._other_happen:
+            # wrong step handling
+            # print("action posterior after bayseian inference is",  exp._action_posterior_prob)
+            print("sensor_notif is:", sensor_notification)
+            exp.handle_exception()
+            
+        # correct step procedure
+        else:
+            length = len(exp._explaset)
+            
+            # input step start a new goal (bottom up procedure to create ongoing status)
+            # include recognition and planning
+            exp.explaSet_expand_part1(length)
+
+            # belief state update
+            state = State()
+            state.update_state_belief(exp)
+            ## TODO: user the above function to update belief over the state.
+            
+            # input step continues an ongoing goal
+            # include recognition and planning 
+            exp.explaSet_expand_part2(length)
+            
+
+                    
+        exp.pendingset_generate()
+        
+        # compute goal recognition result PROB and planning result PS
+        exp.task_prob_calculate(self.HTNCoachDial_problem.hs.real_output_filename)
+        
+        #output PROB and PS in a file
+        exp.print_explaSet()
+
+        ## change true state of the environment 
+        #  {**self.init_worldstate_state, **self.init_explaset_state, **self.init_sensor_state, **self.init_feedback_state, **self.init_question_asked_state})
+
+        # self.HTNCoachDial_problem.env.set_htn_explaset(self.HTNCoachDial_problem.env.state, exp)
+        # self.HTNCoachDial_problem.agent.cur_belief.set_step_index(self.HTNCoachDial_problem.hs.mcts_step_index)
+        self.HTNCoachDial_problem.agent.cur_belief.set_step_index(step_index)
+        self.HTNCoachDial_problem.agent.cur_belief.set_htn_explaset(exp)
+        self.HTNCoachDial_problem.env.state.set_htn_explaset(exp)
+        self.HTNCoachDial_problem.env.state.set_step_index(step_index)
+        # self.HTNCoachDial_problem.env.state.get_object_state()
+        print("step_index",step_index,"step",step, "sensor_notif:", sensor_notification)
+        if sensor_notification: #sensor noti
+            self.update_true_state(self.HTNCoachDial_problem.env.state, sensor_notification[0])## update world state,
+        # attribute =  self.explaset_title[1]
+        # self.explaset_title = "-".join(self.explaset_title)
+        explaset_state_dict = {"object":self.explaset_title[0], "attribute": self.explaset_title[1] , "obj_att_value": step}
+        self.update_true_state(self.HTNCoachDial_problem.env.state, explaset_state_dict)## update explaset action which stores the current sensor (TODO: MAYBE remove sensor state)
+
+        while not self.HTNCoachDial_problem.hs.check_terminal_state(step_index):
+            # print("loop condition", self.HTNCoachDial_problem.hs.check_terminal_state(step_index))
+            
             rand_ = random.random()
             if rand_<self._no_trigger:
                 time.sleep(self._sleep_interval)
                 
             #go through the engine logic
             else:
-                if step != "none":
-                    # sensor_notification = copy.deepcopy(realStateANDSensorUpdate(step, self._output_file_name))
-                    
-                    exp.setSensorNotification(sensor_notification)
-                      
-                # posterior
-                otherHappen, observation_prob = exp.action_posterior()
-                
-                #TODO: self.HTNCoachDial_problem.agent.observation_model.set_lang_objattrs_prob(observation_prob)
-                
-                # wrong step detect
-                if otherHappen > self._other_happen:
-                    # wrong step handling
-                    print("action posterior after bayseian inference is",  exp._action_posterior_prob)
-                    exp.handle_exception()
-                    
-                # correct step procedure
-                else:
-                    length = len(exp._explaset)
-                    
-                    # input step start a new goal (bottom up procedure to create ongoing status)
-                    # include recognition and planning
-                    exp.explaSet_expand_part1(length)
-
-                    # belief state update
-                    state = State()
-                    state.update_state_belief(exp)
-                    ## TODO: user the above function to update belief over the state.
-                    
-                    # input step continues an ongoing goal
-                    # include recognition and planning 
-                    exp.explaSet_expand_part2(length)
-                    
-
-                         
-                exp.pendingset_generate()
-                
-                # compute goal recognition result PROB and planning result PS
-                exp.task_prob_calculate()
-                
-                #output PROB and PS in a file
-                exp.print_explaSet()
-
-                ## change true state of the environment 
-                #  {**self.init_worldstate_state, **self.init_explaset_state, **self.init_sensor_state, **self.init_feedback_state, **self.init_question_asked_state})
-        
-                # self.HTNCoachDial_problem.env.set_htn_explaset(self.HTNCoachDial_problem.env.state, exp)
-                # self.HTNCoachDial_problem.agent.cur_belief.set_step_index(self.HTNCoachDial_problem.hs.mcts_step_index)
-                self.HTNCoachDial_problem.agent.cur_belief.set_step_index(step_index)
-                self.HTNCoachDial_problem.agent.cur_belief.set_htn_explaset(exp)
-                self.HTNCoachDial_problem.env.state.set_htn_explaset(exp)
-                self.HTNCoachDial_problem.env.state.set_step_index(step_index)
-                # self.HTNCoachDial_problem.env.state.get_object_state()
-                self.update_true_state(self.HTNCoachDial_problem.env.state, sensor_notification[0])## update world state,
-                # attribute =  self.explaset_title[1]
-                # self.explaset_title = "-".join(self.explaset_title)
-                explaset_state_dict = {"object":self.explaset_title[0], "attribute": self.explaset_title[1] , "obj_att_value": step}
-                self.update_true_state(self.HTNCoachDial_problem.env.state, explaset_state_dict)## update explaset action which stores the current sensor (TODO: MAYBE remove sensor state)
-
+        # while(notif._notif.qsize()>0):
+            # self.HTNCoachDial_problem.hs.clear_mcts_history()
+            
                 # TODO: update feedback and question asked from previous loop which is None for the first time.
 
                 
@@ -272,7 +320,8 @@ class Tracking_Engine(object):
                 pipeline = [ {"$match": {}}, 
                             {"$out": "backup_state"},
                 ]
-                db._state.aggregate(pipeline)
+                db._state.aggregate(pipeline) ##update db_client.backup_state. db._backup_state (points to backup_state)
+                # db._backup_state = self.db_client.backup_state
 
                 pipeline = [ {"$match": {}}, 
                             {"$out": "backup_sensor"},
@@ -280,30 +329,32 @@ class Tracking_Engine(object):
                 db._sensor.aggregate(pipeline)
 
                 print("going to plan")
-                total_reward, total_discounted_reward = planner_one_loop(self.HTNCoachDial_problem, self.pouct, nsteps=1, debug_tree=False,  total_reward = total_reward, total_discounted_reward = total_discounted_reward, i=index, true_state = step, prob_lang =self._p_l)
-                TreeDebugger(self.HTNCoachDial_problem.agent.tree).pp
+                total_reward, total_discounted_reward, step_index, gamma = planner_one_loop(self.HTNCoachDial_problem, self.pouct, nsteps=1, debug_tree=False,  total_reward = total_reward, total_discounted_reward = total_discounted_reward, i=step_index, true_state = step, prob_lang =self._p_l, gamma = gamma)
                 index+=1
 
-                '''Restoring the state for next iteration, env variable in HTNcoachproblem should be reset'''
+                '''Not restore as set at start of simulation'''
+                # '''Restoring the state for next iteration, env variable in HTNcoachproblem should be reset'''
 
-                pipeline = [ {"$match": {}}, 
-                            {"$out": "state"},
-                ]
-                db._backup_state.aggregate(pipeline)
+                # pipeline = [ {"$match": {}}, 
+                #             {"$out": "state"},
+                # ]
+                # db._backup_state.aggregate(pipeline)
 
-                pipeline = [ {"$match": {}}, 
-                            {"$out": "sensor"},
-                ]
-                db._backup_sensor.aggregate(pipeline)
+                # pipeline = [ {"$match": {}}, 
+                #             {"$out": "sensor"},
+                # ]
+                # db._backup_sensor.aggregate(pipeline)
 
 
                 print("go into next loop", index)
                 print()
                 print()
         
+        return total_reward, total_discounted_reward 
+
         # HTN
-        with open(self.HTNCoachDial_problem.reward_output_filename, 'a') as f:
-            f.write('\n========================\n')
+        # with open(self.HTNCoachDial_problem.reward_output_filename, 'a') as f:
+        #     f.write('\n========================\n')
         '''
         print
         print("the engine has been started...")

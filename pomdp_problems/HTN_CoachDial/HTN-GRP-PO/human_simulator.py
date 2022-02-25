@@ -16,8 +16,9 @@ WORKTREE_DIR_BASELINE = os.path.dirname(pomdp_py_dir)
 TESTCASES_DIR = WORKTREE_DIR_BASELINE + "/TestCases"
 
 class human_simulator(object):
-    def __init__(self, output_filename):
-        self.index_test_case = int(output_filename.split("_")[0][4:])-1
+    def __init__(self, output_filename, mcts_output_filename):
+
+        self.index_test_case = int(output_filename.split("/")[-1].split("_")[0][4:])-1
         self._notifs = [] ##List of notifications.
         self._notifs_to_index = defaultdict(list)
         # self._index_to_notifs = defaultdict(list)
@@ -25,6 +26,7 @@ class human_simulator(object):
         self.wrong_actions = {}
         self.wrong_actions[0] =["use_soap","open_tea_box_1", "rinse_hand"] #soft 
         self.wrong_actions[1]=["turn_off_faucet_1", "close_tea_box_1"] #hard
+        self.all_wrong_actions =  sum(self.wrong_actions.values(),[])
         self.correct_actions = ["turn_on_faucet_1", "open_tea_box_1"] #hard
         # self.index_test_case = None
         # self.bool_wrong_actions = None
@@ -37,7 +39,9 @@ class human_simulator(object):
         self.mcts_bool_wrong_actions = None
         self.real_bool_wrong_actions = None
         # self.mcts_bool_wrong_actions = None
-        self.output_filename = output_filename
+        self.real_output_filename = output_filename
+        self.mcts_output_filename = mcts_output_filename
+        self.sensor_notification_dict = {} #step_name:sensor_notification
         
         # self.
 
@@ -112,9 +116,11 @@ class human_simulator(object):
             else:
                 self.mcts_bool_wrong_actions = None
         else:
+            # print("wrong step - true", num < 1 - self.forgetfulness)
             if num < 1 - self.forgetfulness:
                 # print("goal test case index", )
                 prev_step_index+=1
+                # print(self._notifs[self.index_test_case]._notif.queue, prev_step_index )
                 curr_step = self._notifs[self.index_test_case].get_one_notif(prev_step_index)
 
             else:
@@ -126,13 +132,13 @@ class human_simulator(object):
 
         if real_step:
             self.real_step_index = prev_step_index 
-            sensor_notification = realStateANDSensorUpdate(curr_step, self.output_filename, real_step = True)
-            print("simulation", prev_step_index, curr_step)
+            sensor_notification = realStateANDSensorUpdate(curr_step, self.real_output_filename, real_step = True)
+            # print("simulation", prev_step_index, curr_step)
             a=1
         else:
             # self.mcts_step_index = prev_step_index
-            sensor_notification = realStateANDSensorUpdate(curr_step, self.output_filename, real_step = False)
-
+            sensor_notification = realStateANDSensorUpdate(curr_step, self.mcts_output_filename, real_step = False)
+        self.sensor_notification_dict[curr_step] = sensor_notification
         return prev_step_index, curr_step, sensor_notification
         # pass
 
@@ -180,11 +186,12 @@ class human_simulator(object):
     def check_notif_queue_length(self):
         return self._notifs[self.index_test_case]._notif.qsize()
 
-    def mcts_check_terminal_state(self, curr_state_step_index):
-        return curr_state_step_index == (self._notifs[self.index_test_case]._notif.qsize() - 1)
+    def check_terminal_state(self, curr_state_step_index):
+        # print(curr_state_step_index, self._notifs[self.index_test_case]._notif.qsize() -1 )
+        return curr_state_step_index > (self._notifs[self.index_test_case]._notif.qsize() - 1)
     
-    def real_check_terminal_state(self):
-        return self.real_step_index == (self._notifs[self.index_test_case]._notif.qsize() - 1)
+    # def real_check_terminal_state(self):
+    #     return self.real_step_index == (self._notifs[self.index_test_case]._notif.qsize() - 1)
     
     def clear_mcts_history(self):
         return self.real_step_index

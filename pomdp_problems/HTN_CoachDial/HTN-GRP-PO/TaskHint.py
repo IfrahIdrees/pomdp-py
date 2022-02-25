@@ -61,7 +61,7 @@ class TaskHint(object):
     def get_key(self, item):
         return item[1]
     
-    def print_taskhintInTable(self):
+    def print_taskhintInTable(self, file_name):
         step_level_hint = {}
         for k, v in self.prompt_task.items():
             if k in self.step_dict:
@@ -78,7 +78,9 @@ class TaskHint(object):
         if 'make_coffee' in self.prompt_task:
             make_coffee = round(self.prompt_task['make_coffee'][0], 8)
             
-        with open(self._output_file_name, 'a') as f:
+        if file_name == "":
+            return 
+        with open(file_name, 'a') as f:
             f.write(str(wash_hand) + "\t" + str(make_tea) + "\t" + str(make_coffee) + "\t" + str(step_level_hint) + "\t")
         
     def print_taskhint(self):

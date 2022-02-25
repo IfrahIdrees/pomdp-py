@@ -1,5 +1,6 @@
 from pomdp_py.framework.planner cimport Planner
 from pomdp_py.framework.basics cimport Agent, PolicyModel, Action, State, Observation
+from pomdp_problems.HTNcoachDial.database import DB_Object
 
 cdef class TreeNode:
     cdef public dict children
@@ -30,7 +31,8 @@ cdef class POUCT(Planner):
     cdef float _last_planning_time
     cdef bint _show_progress
     cdef int _pbar_update_interval
-
+    cdef dict __dict__
+    
     cpdef _search(self)
     cpdef _simulate(POUCT self,
                     State state, tuple history, VNode root, QNode parent,

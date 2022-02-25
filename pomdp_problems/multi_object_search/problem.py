@@ -193,6 +193,7 @@ def solve(problem,
                                  planning_time=planning_time,
                                  exploration_const=exploration_const,
                                  rollout_policy=problem.agent.policy_model)  # Random by default
+        planner._db = None
     elif isinstance(random_object_belief, pomdp_py.Particles):
         # Use POMCP
         planner = pomdp_py.POMCP(max_depth=max_depth,

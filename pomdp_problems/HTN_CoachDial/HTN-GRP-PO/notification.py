@@ -29,6 +29,7 @@ class notification(object):
         if self._notif.empty():
             return None
         else:
+            # print("notif queue, ", len(self._notif.queue), step_index)
             return self._notif.queue[step_index]  
         
         
