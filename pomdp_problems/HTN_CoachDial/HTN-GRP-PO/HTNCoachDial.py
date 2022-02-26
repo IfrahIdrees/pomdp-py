@@ -1085,7 +1085,6 @@ class HTNCoachDial(pomdp_py.POMDP):
         HTNCoachDial_problem.agent.set_belief(init_belief, prior=True)
         return HTNCoachDial_problem
 
-
 def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=False, discount=0.95, gamma = 1.0, total_reward = 0, total_discounted_reward = 0, i=0, true_state = None, prob_lang = 0.95):
     # planner._db = db
     # if agent == standard

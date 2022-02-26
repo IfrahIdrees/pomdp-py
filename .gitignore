@@ -144,8 +144,11 @@ pomdp_problems/HTN_CoachDial/HTN-GRP-PO/*.txt
 pomdp_problems/HTN_CoachDial/logs
 pomdp_problems/HTN_CoachDial/outputs
 pomdp_problems/HTN_CoachDial/outputs
+pomdp_problems/HTN_CoachDial/accurracyStatisticOutput.txt
+pomdp_problems/HTN_CoachDial/stdOutput.txt
 
 pomdp_problems/rocksample/*.txt
 
 pomdp_problems/HTN_CoachDial/HTN-GRP-PO/D*
+
 

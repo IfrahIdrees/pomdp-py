@@ -14,7 +14,9 @@ do
 done
 
 # Run experiment
-python viz_rewardvssim.py --agent_type ${agent_type} \
+# conda 
+conda activate pomdp-py-HTNCoachDial
+python viz_rewardvssn.py --agent_type ${agent_type} \
     --maxsteps ${maxsteps} \
     --num_sims ${num_sims} \
     --d ${d} \

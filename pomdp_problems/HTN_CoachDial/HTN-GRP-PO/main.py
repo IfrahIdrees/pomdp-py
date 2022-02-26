@@ -159,7 +159,8 @@ if __name__ == '__main__':
     
     ##sensor set up files
 
-    sensor_reliability = [0.99,0.95, 0.9, 0.8, 0.7, 0.6]
+    # sensor_reliability = [0.99,0.95, 0.9, 0.8, 0.7, 0.6]
+    sensor_reliability = [0.99]
     # sensor_reliability = [0.7, 0.6]
     # sensor_reliability = [0.6]
     # sensor_reliability = [0.95, 0.99, 0.6]
@@ -176,7 +177,7 @@ if __name__ == '__main__':
     #nohup running 6,7
     parser, args = parseArguments()
     trials = 10
-    for file_num in range(5,12): #7
+    for file_num in range(9,10): #7
         # if file_num == 9:
         #     sensor_reliability = [0.99]
         for x in sensor_reliability:
@@ -189,7 +190,13 @@ if __name__ == '__main__':
             mcts_output_filename = "mctsCase"+ str(file_num) + "_" + str(x) + ".txt"
             ##input file name
             input_file_name = "../../../../TestCases/Case" + str(file_num)
-            cumulative_reward_df = pd.DataFrame(columns = ['Num_Sims',"cumu_reward", "cumu_discounted_reward"])
+            
+
+            cum_rew_file_name =  "{}/{}_overall_stats.csv".format(args.output_dir, output_file_name)
+            if os.path.exists(cum_rew_file_name):
+                cumulative_reward_df = pd.read_csv(cum_rew_file_name)
+            else:
+                cumulative_reward_df = pd.DataFrame(columns = ['Num_Sims',"cumu_reward", "cumu_discounted_reward"])
             
             if not exists(input_file_name):
                 continue
@@ -268,6 +275,8 @@ if __name__ == '__main__':
                 # args = parser.parse_args()
                 tracking_engine = Tracking_Engine(no_trigger = no_notif_trigger_prob, sleep_interval = interval, cond_satisfy=cond_satisfy, cond_notsatisfy = cond_notsatisfy, delete_trigger = delete_trigger, otherHappen = other_happen, file_name = input_file_name, output_file_name = output_file_name, mcts_output_filename = mcts_output_filename, args=args, db_client = db_client)
                 total_reward_per_iter, total_discounted_reward_per_iter = tracking_engine.start()
+                cumulative_reward_df.loc[len(cumulative_reward_df.index)] = ([args.num_sims, total_reward_per_iter, total_discounted_reward_per_iter])
+
                 total_reward += total_reward_per_iter
                 total_discounted_reward += total_discounted_reward_per_iter
                 print("here")
@@ -286,8 +295,8 @@ if __name__ == '__main__':
             total_reward=total_reward_per_iter/ denominator
             total_discounted_reward = total_discounted_reward_per_iter / denominator
                 
-            cumulative_reward_df.loc[len(cumulative_reward_df.index)] = ([args.num_sims, total_reward, total_discounted_reward])
-            cumulative_reward_df.to_csv("{}/{}_overall_stats.csv".format(args.output_dir, output_file_name), index = False)
+            # cumulative_reward_df.loc[len(cumulative_reward_df.index)] = ([args.num_sims, total_reward, total_discounted_reward])
+            cumulative_reward_df.to_csv(cum_rew_file_name, index = False)
             # cumulative_reward_df.iloc[-1, accuracy_df.columns.get_loc(str(reliability ))] = round(accurracy, 4)
             print("I am good until now")
             
