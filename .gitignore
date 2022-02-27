@@ -139,7 +139,7 @@ Thumbs.db
 #Testcases
 # pomdp-py/pomdp_problems/HTN_CoachDial/HTN-GRP-PO/Case14_0.7.txt
 pomdp_problems/HTN_CoachDial/HTN-GRP-PO/belief_representation.py
-pomdp_problems/HTN_CoachDial/HTN-GRP-PO/env.py
+# pomdp_problems/HTN_CoachDial/HTN-GRP-PO/env.py
 pomdp_problems/HTN_CoachDial/HTN-GRP-PO/*.txt
 pomdp_problems/HTN_CoachDial/logs
 pomdp_problems/HTN_CoachDial/outputs
