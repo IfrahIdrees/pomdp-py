@@ -317,6 +317,7 @@ class Tracking_Engine(object):
                 # self._state = db.state
                 # self._sensor = db.sensor
                 # self._mcts_sensor = db.mcts_sensor
+
                 pipeline = [ {"$match": {}}, 
                             {"$out": "backup_state"},
                 ]

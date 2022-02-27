@@ -23,6 +23,8 @@ import argparse
 "--qr", "5",
 "--qp", "-5",
 
+'''run command - python viz_rewardvssn.py --agent_type fixed_always_ask htn_baseline --maxsteps 10 --num_sims 10 --d 0.95 --e 10 --gr 10 --wp -1 --qr 5 --qp -5'''
+
 def get_output_path(args):
     # BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     # ROOT_DIR = os.path.dirname(BASE_DIR)
@@ -109,8 +111,9 @@ if __name__ == "__main__":
     # OUTPUT_DIR = BASE_DIR + "/output"
     results_storage_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))+"/outputs/reward_viz"
     os.makedirs(results_storage_path, exist_ok=True)
-    for Case_Num in range(1,11):
+    for Case_Num in range(5,6):
         sensor_reliability = [0.99, 0.9, 0.95, 0.8, 0.7, 0.6]
+        sensor_reliability = [0.99, 0.6]
         if Case_Num == 4:
             continue
         columns = ['CaseNum','SensorReliability',"cumu_reward", "cumu_discounted_reward"]

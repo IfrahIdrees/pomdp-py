@@ -88,6 +88,44 @@ class human_simulator(object):
         self.index_test_case = random.randint(0, len(self._notifs)-1)
         print("Selected test case is", self.index_test_case)
 
+    # def curr_step(self, prev_step, action, real_step = False):
+    #     num = random.random()
+    #     if real_step:
+    #         prev_step_index = self.real_step_index
+    #         # bool_wrong_actions = self.real_bool_wrong_actions
+    #         # self.real_bool_wrong_actions = None
+    #     else:
+    #         prev_step_index = prev_step
+    #         # prev_step_index = self.mcts_step_index
+    #         # bool_wrong_actions = self.mcts_bool_wrong_actions
+    #         # self.mcts_bool_wrong_actions = None
+
+    #     # title = "sensor_notif"
+    #     # title_split = title.split("_")
+    #     # self.prev_step = prev_step.attributes[title_split]
+    #     # self.prev_step  = prev_step._sensor_notification
+    #     # self.prev_step = prev_step
+    #     # TODO: Done Need to deal with wrong action execution for mcts and real separately.
+        
+        
+    #         # print("wrong step - true", num < 1 - self.forgetfulness)
+    #     prev_step_index+=1
+    #         # print(self._notifs[self.index_test_case]._notif.queue, prev_step_index )
+    #     curr_step = self._notifs[self.index_test_case].get_one_notif(prev_step_index)
+
+    #     if real_step:
+    #         self.real_step_index = prev_step_index 
+    #         sensor_notification = realStateANDSensorUpdate(curr_step, self.real_output_filename, real_step = True)
+    #         # print("simulation", prev_step_index, curr_step)
+    #         a=1
+    #     else:
+    #         # self.mcts_step_index = prev_step_index
+    #         sensor_notification = realStateANDSensorUpdate(curr_step, self.mcts_output_filename, real_step = False)
+    #     self.sensor_notification_dict[curr_step] = sensor_notification
+    #     return prev_step_index, curr_step, sensor_notification
+        
+
+    # this curr step function dealt with wrong steps+96
     def curr_step(self, prev_step, action, real_step = False):
         num = random.random()
         if real_step:
@@ -154,7 +192,7 @@ class human_simulator(object):
         # else:
         #     index_soft_or_hard = random.randint(0,1)
         #     curr_step = random.choice(self.wrong[index_soft_or_hard])
-        # return curr_step
+        # return curr_step 
 
     def probability(self, next_state, state):
         state =  state._sensor_notification

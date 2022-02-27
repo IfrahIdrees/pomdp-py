@@ -390,10 +390,10 @@ class explaSet(object):
                 new_prob_1 = new_prob_1 + p[0]
                 new_prob_2 = new_prob_2 + p[1]
                 # print(new_prob_1, new_prob_2)       
-        try:
-            return float(new_prob_1)/(new_prob_1+new_prob_2) #p(obs| st-1, at) #p(turnonfaucet | nothing, turn_on_faucet) p(obser | nothing, switch on kettle)
-        except ZeroDivisionError:
-            return 0
+        # try:
+        return float(new_prob_1)/(new_prob_1+new_prob_2) #p(obs| st-1, at) #p(turnonfaucet | nothing, turn_on_faucet) p(obser | nothing, switch on kettle)
+        # except ZeroDivisionError:
+            # return 0
         # return float(new_prob_1)
         # /(new_prob_1+new_prob_2) #p(obs| st-1, at) #p(turnonfaucet | nothing, turn_on_faucet) p(obser | nothing, switch on kettle)
         
@@ -624,6 +624,7 @@ class explaSet(object):
 
                 # taskNet_._expandProb *= (1-p_l)
             expla._prob*= (1 - p_l)
+            # expla._prob*= 1
         return
    
     ##################################################################################################    

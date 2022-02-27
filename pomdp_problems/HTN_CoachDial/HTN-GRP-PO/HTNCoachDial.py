@@ -908,6 +908,8 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
 
     ### update exp prob
     exp = curr_belief.htn_explaset ## feedback is for s1 so update s1's expset
+    
+    ##perform langauge update is now using original results
     feedback_title = config.feedback_title
     feedback = real_observation.get_lang_objattr(feedback_title)
     
@@ -922,24 +924,26 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
 
     # return highest_action_PS[0]
 
-
-    if action.name == "ask-clarification-question" and feedback != None:
-        exp.update_with_language_feedback(feedback, exp.highest_action_PS, prob_lang)
-        exp.pendingset_generate()
-        # compute goal recognition result PROB and planning result PS
-        taskhint = exp.task_prob_calculate("")
-        print("taskhint is", taskhint.__dict__)
-        
-        #output PROB and PS in a file
-        ## @II here decide prob of recognizing each task
-        # exp.print_explaSet1()
-        # exp.print_explaSet()
-        # index+=1
-        # print "go into the next loop"
-        # print 
-        # print
-    else:
-        exp.update_without_language_feedback(prob_lang)
+    if HTNCoachDial_problem.agent_type != "htn_baseline":
+        if action.name == "ask-clarification-question" and feedback != None:
+            exp.update_with_language_feedback(feedback, exp.highest_action_PS, prob_lang)
+            exp.pendingset_generate()
+            # compute goal recognition result PROB and planning result PS
+            taskhint = exp.task_prob_calculate("")
+            print("taskhint is", taskhint.__dict__)
+            
+            #output PROB and PS in a file
+            ## @II here decide prob of recognizing each task
+            # exp.print_explaSet1()
+            # exp.print_explaSet()
+            # index+=1
+            # print "go into the next loop"
+            # print 
+            # print
+        ## remove without langauge update from else to doing everytime before the state change
+        # else:
+            # exp.update_without_language_feedback(prob_lang)
+    
 
 
     s1_step_index = curr_belief.step_index 
@@ -972,6 +976,10 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
         else:
             # print("updating explaset")
             length = len(exp._explaset)
+
+            ##incorporate probaility of not getting language feedback
+            if HTNCoachDial_problem.agent_type != "htn_baseline":
+                exp.update_without_language_feedback(prob_lang)
             
             # input step start a new goal (bottom up procedure to create ongoing status)
             # include recognition and planning

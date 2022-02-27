@@ -145,10 +145,10 @@ class State(object):
             sump = sump +p            
 
         for x in newp:
-            try:
-                newp[x] = newp[x]/sump
-            except ZeroDivisionError:
-                newp[x]=0
+            # try:
+            newp[x] = newp[x]/sump
+            # except ZeroDivisionError:
+                # newp[x]=0
         return newp        
 
 
