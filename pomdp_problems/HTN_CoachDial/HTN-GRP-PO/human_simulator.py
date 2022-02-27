@@ -42,7 +42,15 @@ class human_simulator(object):
         self.real_output_filename = output_filename
         self.mcts_output_filename = mcts_output_filename
         self.sensor_notification_dict = {} #step_name:sensor_notification
-        
+        self.wrong_per_test_case = {
+            #testcase(o indexed):[step_numbers]
+            6: [2],
+            7: [2,3],
+            8: [2,3,7],
+            9: [1,9,10],
+            10: [3,14],
+            11: [6,8,10]
+        }
         # self.
 
     def read_files(self,dir_name):
@@ -238,3 +246,9 @@ class human_simulator(object):
         return self._notifs[self.index_test_case].get_one_notif(step)
         
 
+    def check_wrong_step(self, step_index):
+        # print(step_index, self.wrong_per_test_case.keys(), self.index_test_case)
+        if self.index_test_case in self.wrong_per_test_case.keys():
+            return step_index in self.wrong_per_test_case[self.index_test_case]
+        else:
+            return False

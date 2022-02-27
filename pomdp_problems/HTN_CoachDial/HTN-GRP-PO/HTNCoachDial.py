@@ -124,7 +124,16 @@ class HTNCoachDialState(pomdp_py.OOState):
         # print)
         sensor_state = self.get_object_state(explaset_title)
         sensor_notification = sensor_state.attributes[explaset_title_split[1]]
-        return 'HTNCoachDialState:%s,%s' % (str(self.step_index), str(sensor_notification)) #, str(self.object_states))
+
+        question_title =config.feedback_title
+        question_title_split = question_title.split("-")
+        # print)
+        question_state = self.get_object_state(question_title)
+        # print(question_state.attributes, question_title_split)
+        question_notification = question_state.attributes[question_title_split[1]]
+
+
+        return 'HTNCoachDialState:%s,%s, question_asked%s' % (str(self.step_index), str(sensor_notification), str(question_notification)) #, str(self.object_states))
     def __repr__(self):
         return str(self)
     def append_object_attribute(self, objid, attr, new_val):
@@ -719,13 +728,15 @@ class RewardModel(pomdp_py.RewardModel):
         # print(self.human_simulator.all_wrong_actions)
         # [for i in ]self.human_simulator._notifs[self.human_simulator.index_test_case]._notif.empty()
         # print()
-        if self.human_simulator.check_terminal_state(state.step_index+1):
+        if self.human_simulator.check_terminal_state(state.step_index+1) and action.name == "wait":
             return self.goal_reward 
+        # elif self.human_simulator.check_terminal_state(state.step_index+1) and action.name == "ask-clarification-question":
+            # return self.goal_reward 
         elif action.name == "wait":
             return self.wait_penalty
-        elif action.name == "ask-clarification-question" and sensor_notification[-1] in self.human_simulator.all_wrong_actions and sensor_notification[-1] == question_asked:
+        elif action.name == "ask-clarification-question" and self.human_simulator.check_wrong_step(state.step_index) and sensor_notification[-1] != question_asked :  #and sensor_notification[-1] in self.human_simulator.all_wrong_actions and sensor_notification[-1] == question_asked:
             return self.question_reward
-        elif action.name == "ask-clarification-question" and not(sensor_notification[-1] in self.human_simulator.all_wrong_actions and sensor_notification[-1] == question_asked):
+        elif action.name == "ask-clarification-question" and (not self.human_simulator.check_wrong_step(state.step_index) or sensor_notification[-1] == question_asked):  #not(sensor_notification[-1] in self.human_simulator.all_wrong_actions and sensor_notification[-1] == question_asked):
             return self.question_penalty
         # else:
             # return -5 #-100s
