@@ -1116,7 +1116,8 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=False, 
     elif HTNCoachDial_problem.agent_type == "fixed_always_ask":
         action = AgentAskClarificationQuestion()
     elif HTNCoachDial_problem.agent_type == "random":
-        action = HTNCoachDial_problem.agent.PolicyModel.sample()
+        action = HTNCoachDial_problem.agent.policy_model.sample()
+        
     #random
     # action = choses_action_randomly()
     #fixed policy -always asking question
