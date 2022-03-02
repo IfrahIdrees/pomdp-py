@@ -111,9 +111,9 @@ if __name__ == "__main__":
     # OUTPUT_DIR = BASE_DIR + "/output"
     results_storage_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))+"/outputs/reward_viz"
     os.makedirs(results_storage_path, exist_ok=True)
-    for Case_Num in range(5,6):
+    for Case_Num in range(1,5):
         sensor_reliability = [0.99, 0.9, 0.95, 0.8, 0.7, 0.6]
-        sensor_reliability = [0.99, 0.6]
+        # sensor_reliability = [0.99, 0.6]
         if Case_Num == 4:
             continue
         columns = ['CaseNum','SensorReliability',"cumu_reward", "cumu_discounted_reward"]

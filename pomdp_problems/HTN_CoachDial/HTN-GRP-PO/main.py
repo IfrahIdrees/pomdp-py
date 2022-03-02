@@ -22,6 +22,10 @@ from os.path import exists
 import config
 import logging
 
+import random
+random.seed(10)
+import numpy as np
+np.random.seed(10)
 
 # sys.path.append(ROOT_DIR)
 # sys.path.append(os.path.join(ROOT_DIR, 'utils'))
@@ -159,8 +163,8 @@ if __name__ == '__main__':
     
     ##sensor set up files
 
-    # sensor_reliability = [0.99,0.95, 0.9, 0.8, 0.7, 0.6]
-    sensor_reliability = [0.99, 0.9, 0.6]
+    sensor_reliability = [0.99,0.95, 0.9, 0.8, 0.7, 0.6]
+    # sensor_reliability = [0.99, 0.9, 0.6]
     # sensor_reliability = [0.7, 0.6]
     # sensor_reliability = [0.6]
     # sensor_reliability = [0.95, 0.99, 0.6]
@@ -176,7 +180,7 @@ if __name__ == '__main__':
     #6,10
     #nohup running 6,7
     parser, args = parseArguments()
-    trials = 2
+    trials = 21
     for file_num in range(1,13): #7
         # if file_num == 9:
         #     sensor_reliability = [0.99]
