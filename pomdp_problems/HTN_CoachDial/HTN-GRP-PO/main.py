@@ -164,11 +164,12 @@ if __name__ == '__main__':
     ##sensor set up files
 
     sensor_reliability = [0.99,0.95, 0.9, 0.8, 0.7, 0.6]
+    # sensor_reliability = [0.9, 0.8, 0.7, 0.6]
     # sensor_reliability = [0.99, 0.9, 0.6]
     # sensor_reliability = [0.7, 0.6]
     # sensor_reliability = [0.6]
     # sensor_reliability = [0.95, 0.99, 0.6]
-    # sensor_reliability = [0.99]
+    sensor_reliability = [0.99, 0.95]
     # sensor_reliability = [0.99,0.6]
     # sensor_reliability = [0.6]
     # sensor_reliability = [1]
@@ -181,7 +182,7 @@ if __name__ == '__main__':
     #nohup running 6,7
     parser, args = parseArguments()
     trials = 21
-    for file_num in range(1,13): #7
+    for file_num in range(1,2): #7
         # if file_num == 9:
         #     sensor_reliability = [0.99]
         for x in sensor_reliability:

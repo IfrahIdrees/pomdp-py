@@ -254,6 +254,9 @@ class Tracking_Engine(object):
         # correct step procedure
         else:
             length = len(exp._explaset)
+
+            ##for develop branch
+            exp.update_without_language_feedback(self._p_l)
             
             # input step start a new goal (bottom up procedure to create ongoing status)
             # include recognition and planning
