@@ -23,9 +23,10 @@ import config
 import logging
 
 import random
-random.seed(10)
 import numpy as np
-np.random.seed(10)
+random_seed = 5999
+random.seed(random_seed) #10, 5999
+np.random.seed(random_seed) #10,5999
 
 # sys.path.append(ROOT_DIR)
 # sys.path.append(os.path.join(ROOT_DIR, 'utils'))
@@ -169,7 +170,7 @@ if __name__ == '__main__':
     # sensor_reliability = [0.7, 0.6]
     # sensor_reliability = [0.6]
     # sensor_reliability = [0.95, 0.99, 0.6]
-    sensor_reliability = [0.99, 0.95]
+    # sensor_reliability = [0.99, 0.95]
     # sensor_reliability = [0.99,0.6]
     # sensor_reliability = [0.6]
     # sensor_reliability = [1]
@@ -181,8 +182,10 @@ if __name__ == '__main__':
     #6,10
     #nohup running 6,7
     parser, args = parseArguments()
-    trials = 21
-    for file_num in range(1,2): #7
+    trials = 15
+    for file_num in range(13,8,-1): #7
+        if file_num == 4:
+            continue
         # if file_num == 9:
         #     sensor_reliability = [0.99]
         for x in sensor_reliability:
@@ -191,6 +194,10 @@ if __name__ == '__main__':
             #     output_file_name = "Random_Case" + str(file_num) + "_" + str(x) + ".txt"
             # else:
             #     output_file_name = "Case" + str(file_num) + "_" + str(x) + ".txt"
+            random_seed+=10
+            random.seed(random_seed) #10, 5999
+            np.random.seed(random_seed) #10,5999
+            
             output_file_name = "Case" + str(file_num) + "_" + str(x) + ".txt"
             mcts_output_filename = "mctsCase"+ str(file_num) + "_" + str(x) + ".txt"
             ##input file name

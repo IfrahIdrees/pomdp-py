@@ -3,7 +3,7 @@
 # for agent_type in "standard"
 #for agent_type in "random" "heuristic"
 # "standard"
-for agent_type in "fixed_always_ask" "standard"
+for agent_type in "standard"
 
 do
     for maxsteps in 10 #50
