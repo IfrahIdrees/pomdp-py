@@ -8,44 +8,6 @@ Code is provided without any guarantees.
 Research sponsored by AGEWELL Networks of Centers of Excellence (NCE).
 ----------------------------------------------------------------------------------------------"""
 # %%
-import os
-import sys
-sys.dont_write_bytecode = True
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = os.path.dirname(BASE_DIR)
-sys.path.append(BASE_DIR)
-sys.path.append(ROOT_DIR+"/database")
-
-from tracking_engine import *
-from pymongo import MongoClient
-from os.path import exists
-import config
-import logging
-
-import random
-import numpy as np
-random_seed = 5999
-random.seed(random_seed) #10, 5999
-np.random.seed(random_seed) #10,5999
-
-# sys.path.append(ROOT_DIR)
-# sys.path.append(os.path.join(ROOT_DIR, 'utils'))
-
-# client = MongoClient()
-# db = client.smart_home3
-
-'''orignal pomdp-htn database is smart_home3'''
-if config.RANDOM_BASELINE:
-    client = MongoClient()
-    db = client.smart_homeRANDOM
-else:
-    client = MongoClient()
-    db = client.smart_home5
-    db_client = db
-
-
-'''logging information'''
-
 def parseArguments():
     parser = argparse.ArgumentParser()
 
@@ -116,24 +78,56 @@ def get_output_path(args):
     os.makedirs(log_dir, exist_ok=True)
     return output_name, output_dir, log_dir
 
-# def get_logger(args):
-#     os.makedirs("../logs/", exist_ok=True)
-#     # os.makedirs("../logs/demo", exist_ok=True)
-#     os.makedirs("../logs/{}".format(args.agent_type), exist_ok=True)
-#     # os.makedirs("../../../logs/{}/{}".format(args.agent_type, args.output_name), exist_ok=True)
-#     logging.basicConfig(level = logging.DEBUG, \
-#             format = '%(asctime)s %(levelname)s: %(message)s', \
-#             datefmt = '%m/%d %H:%M:%S %p', \
-#             filename = '../logs/{}/{}/{}.log'.format(
-#                 args.agent_type, args.output_name, args.output_name
-#             ), \
-#             filemode = 'w'
-#     )
-#     return logging.getLogger()
+
+import os
+import sys
+sys.dont_write_bytecode = True
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(BASE_DIR)
+sys.path.append(BASE_DIR)
+sys.path.append(ROOT_DIR+"/database")
+
+
+from pymongo import MongoClient
+from os.path import exists
+import config
+import logging
+import argparse
+
+# sys.path.append(ROOT_DIR)
+# sys.path.append(os.path.join(ROOT_DIR, 'utils'))
+
+# client = MongoClient()
+# db = client.smart_home3
+parser, args = parseArguments()
+if args.agent_type == "htn_baseline":
+    config.baseline = True
+
+from tracking_engine import *
+
+'''orignal pomdp-htn database is smart_home3'''
+if config.baseline:
+    client = MongoClient()
+    db = client.smart_homebaseline
+    db_client = db
+else:
+    client = MongoClient()
+    db = client.smart_home5
+    db_client = db
+
+
+'''logging information'''
+
 
 def logging_args(args):
     for arg, value in vars(args).items():
         logger.info("Argument {}: {}".format(arg, value))
+
+import random
+import numpy as np
+random_seed = 5999
+random.seed(random_seed) #10, 5999
+np.random.seed(random_seed) #10,5999
 
 if __name__ == '__main__':
     
@@ -167,7 +161,7 @@ if __name__ == '__main__':
     sensor_reliability = [0.99,0.95, 0.9, 0.8, 0.7, 0.6]
     # sensor_reliability = [0.9, 0.8, 0.7, 0.6]
     # sensor_reliability = [0.99, 0.9, 0.6]
-    # sensor_reliability = [0.7, 0.6]
+    # sensor_reliability = [0.9]
     # sensor_reliability = [0.6]
     # sensor_reliability = [0.95, 0.99, 0.6]
     # sensor_reliability = [0.99, 0.95]
@@ -181,9 +175,10 @@ if __name__ == '__main__':
     #sensor_reliability = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
     #6,10
     #nohup running 6,7
-    parser, args = parseArguments()
+    
     trials = 15
-    for file_num in range(13,8,-1): #7
+    # for file_num in range(13,8,-1): #7
+    for file_num in range(1,13):
         if file_num == 4:
             continue
         # if file_num == 9:
@@ -228,11 +223,11 @@ if __name__ == '__main__':
                 sensor_command = ""
 
                 ##add config
-                if config.RANDOM_BASELINE:
-                    os.system("mongoimport --db smart_homeRANDOM --collection method --drop --file ../KnowledgeBase/method.json")
-                    os.system("mongoimport --db smart_homeRANDOM --collection state --drop --file ../KnowledgeBase/state.json")
-                    os.system("mongoimport --db smart_homeRANDOM --collection operator --drop --file ../KnowledgeBase/operator.json")
-                    os.system("mongoimport --db smart_homeRANDOM --collection Rstate --drop --file ../KnowledgeBase/realState.json")
+                if config.baseline:
+                    os.system("mongoimport --db smart_homebaseline --collection method --drop --file ../../../../KnowledgeBase/method.json")
+                    os.system("mongoimport --db smart_homebaseline --collection state --drop --file ../../../../KnowledgeBase/state.json")
+                    os.system("mongoimport --db smart_homebaseline --collection operator --drop --file ../../../../KnowledgeBase/operator.json")
+                    os.system("mongoimport --db smart_homebaseline --collection Rstate --drop --file ../../../../KnowledgeBase/realState.json")
                     # db.backup_state.insertOne({});
                 else:
                     ##Some times those command do not work, add "--jsonArray" to the end of each command line
@@ -249,13 +244,13 @@ if __name__ == '__main__':
                 # os.system("mongoimport --db smart_home3 --collection Rstate --drop --file ../../../../KnowledgeBase/realState.json")
                 
                 ##command for sensor reliability set up
-                if config.RANDOM_BASELINE:
+                if config.baseline:
                     if x == None:
-                        sensor_command = "mongoimport --db smart_homeRANDOM --collection sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
-                        # mcts_sensor_command = "mongoimport --db smart_homeRANDOM --collection mcts_sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
+                        sensor_command = "mongoimport --db smart_homebaseline --collection sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
+                        # mcts_sensor_command = "mongoimport --db smart_homebaseline --collection mcts_sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
                     else:
-                        sensor_command = "mongoimport --db smart_homeRANDOM --collection sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor" + "_" + str(x) + ".json"
-                        # mcts_sensor_command = "mongoimport --db smart_homeRANDOM --collection mcts_sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor" + "_" + str(x) + ".json"
+                        sensor_command = "mongoimport --db smart_homebaseline --collection sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor" + "_" + str(x) + ".json"
+                        # mcts_sensor_command = "mongoimport --db smart_homebaseline --collection mcts_sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor" + "_" + str(x) + ".json"
                 
                 else:
                     if x == None:

@@ -6,6 +6,7 @@ RANDOM_BASELINE = False
 question_title = "language-indexQuestionAsked"
 explaset_title = "explaset-action"
 feedback_title = "language-feedback"
+baseline = False
 ''' Tracking engine variables'''
 _no_trigger = None
 _sleep_interval = None

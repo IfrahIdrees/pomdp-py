@@ -1,0 +1,89 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        // {
+        //     "type": "bashdb",
+        //     "request": "launch",
+        //     "name": "Bash-Debug (type in script name)",
+        //     "cwd": "${workspaceFolder}",
+        //     "program": "${command:AskForScriptName}",
+        //     "args": []
+        // },
+        // {
+        //     "type": "bashdb",
+        //     "request": "launch",
+        //     "name": "Bash-Debug (hardcoded script name)",
+        //     "cwd": "${workspaceFolder}",
+        //     "program": "${file}",
+        //     "args": []
+        // },
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "cwd": "${fileDirname}",
+            "justMyCode": false,
+            // "args" : ["--agent_type", "standard",
+            //     "--maxsteps", "10",
+            //     "--num_sims", "3",
+            //     "--d", "0.95",
+            //     "--e", "10",
+            //     "--gr", "10",
+            //     "--wp", "-1",
+            //     "--qr", "5",
+            //     "--qp", "-5",
+            //     ],
+            // "args" : ["--agent_type", "htn_baseline",
+            //     "--maxsteps", "2",
+            //     "--num_sims", "2",
+            //     "--d", "2",
+            //     "--e", "2",
+            //     "--gr", "2",
+            //     "--wp", "2",
+            //     "--qr", "2",
+            //     "--qp", "2",
+            //     ],
+            // "args" : ["--agent_type", "fixed_always_ask",
+            //     "--maxsteps", "2",
+            //     "--num_sims", "20",
+            //     "--d", "2",
+            //     "--e", "2",
+            //     "--gr", "2",
+            //     "--wp", "2",
+            //     "--qr", "2",
+            //     "--qp", "2",
+            //     ]
+            "args" : [ "--agent_type", "htn_baseline",
+                // "--agent_type", "standard htn_baseline fixed_always_ask",
+                "--maxsteps", "10",
+                "--num_sims", "10",
+                "--d", "0.95",
+                "--e", "10",
+                "--gr", "10",
+                "--wp", "-1",
+                "--qr", "5",
+                "--qp", "-5",
+                ]
+        },
+        {
+            "name": "(gdb) Attach",
+            "type": "cppdbg",
+            "request": "attach",
+            "program": "/home/ifrah/anaconda2/envs/pomdp-py-HTNCoachDial/bin/python", /* My virtual env */
+            "processId": "${command:pickProcess}",
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        }
+    ]
+}

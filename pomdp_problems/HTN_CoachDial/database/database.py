@@ -22,13 +22,12 @@ import random
 # db = client.smart_home3
 import config
 
-if config.RANDOM_BASELINE:
+if config.baseline:
     client = MongoClient()
-    db = client.smart_homeRANDOM
+    db = client.smart_homebaseline
 else:
     client = MongoClient()
     db = client.smart_home5
-
 class DB_Object(object):
     def __init__(self):
         self._method = db.method

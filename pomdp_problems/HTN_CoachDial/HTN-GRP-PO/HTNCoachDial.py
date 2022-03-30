@@ -125,7 +125,7 @@ class HTNCoachDialState(pomdp_py.OOState):
         sensor_state = self.get_object_state(explaset_title)
         sensor_notification = sensor_state.attributes[explaset_title_split[1]]
 
-        question_title =config.feedback_title
+        question_title =config.question_title
         question_title_split = question_title.split("-")
         # print)
         question_state = self.get_object_state(question_title)

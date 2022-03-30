@@ -213,7 +213,7 @@ class explaSet(object):
                     self._action_posterior_prob[action[0]] = action[1]
 
         #---------------------------------
-        #'''   
+        '''   
             for start_task in expla._start_task:
                 if expla._start_task[start_task] == 0:
                     #target_method is the highest level goal
@@ -227,7 +227,7 @@ class explaSet(object):
                         else:
                             ## when go to else?
                             self._action_posterior_prob[start_action] = initialize_prob
-        #'''
+        '''
         #---------------------------------
         ## previous code sets prior over the nexxt pending task to be done p(at)
         # print("Start of iteration, prior is", self._action_posterior_prob, file=sys.stderr)
