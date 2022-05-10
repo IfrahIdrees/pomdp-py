@@ -93,12 +93,13 @@ class Explanation(object):
                                 newexp = Explanation(v=prob, forest = list(self._forest), start_task=newstart_task)
                             else:
                                 newforest = list(self._forest)
-                                ##here means it will start a new goal. 
+                                #@thesiswriting
+                                '''##here means it will start a new goal. 
                                 ##However, if the already started goal do not have any execute sequence, remove
                                 for tasknet in newforest:
                                     if len(tasknet._execute_sequence._sequence) == 0:
                                         newstart_task[tasknet._goalName] = 0
-                                        newforest.remove(tasknet)
+                                        newforest.remove(tasknet)'''
                                 newforest.append(g)
                                 newstart_task[g._goalName] = 1
                                 newexp = Explanation(v=prob, forest = newforest, start_task=newstart_task)
@@ -126,7 +127,9 @@ class Explanation(object):
                     action_node.data._completeness = True
                     executed_sequence = ExecuteSequence(sequence = copy.deepcopy(taskNet._execute_sequence._sequence), effect_summary = copy.deepcopy(taskNet._execute_sequence._effect_summary))
                     executed_sequence.add_action(act_expla[0])
-                    newTaskNet = TaskNet(goalName = theTree.get_node(theTree.root).tag, tree = theTree, expandProb = taskNetPending._branch_factor, execute_sequence = copy.deepcopy(executed_sequence))
+                    newTaskNet = TaskNet(goalName = theTree.get_node(theTree.root).tag, tree = theTree, expandProb = taskNetPending._branch_factor, execute_sequence = executed_sequence)
+                    #@thesiswriting 
+                    '''newTaskNet = TaskNet(goalName = theTree.get_node(theTree.root).tag, tree = theTree, expandProb = taskNetPending._branch_factor, execute_sequence = copy.deepcopy(executed_sequence))'''
                     newTaskNet.update()
                     #get a new taskNet end
                     
@@ -183,7 +186,9 @@ class Explanation(object):
                 elif len(parents)==0: #this tree already reached goal node
                     executed_sequence = ExecuteSequence(sequence = [], effect_summary = {})
                     executed_sequence.add_action(action)
-                    my_goal = TaskNet(goalName=tag, tree=thisTree[0], expandProb=thisTree[1], execute_sequence = copy.deepcopy(executed_sequence))
+                    my_goal = TaskNet(goalName=tag, tree=thisTree[0], expandProb=thisTree[1], execute_sequence = executed_sequence)
+                    #@thesiswriting
+                    '''my_goal = TaskNet(goalName=tag, tree=thisTree[0], expandProb=thisTree[1], execute_sequence = copy.deepcopy(executed_sequence))'''
                     my_goal.update()
                     task_net.append(my_goal)
         
@@ -218,7 +223,7 @@ class Explanation(object):
         return satisfy_branch    
 
        
-    def my_create_new_node(self, parent, decompose, childTree): #expand the tree uses the higher level node(parent)
+    def my_create_new_node(self, parent, decompose, childTree):
         newTree = Tree()
         parent_data = Node_data(complete=False, ready = True, branch = True)
         newTree.create_node(parent, parent, data=parent_data)
@@ -317,27 +322,6 @@ class Explanation(object):
 ##############################################################################################################
 #####                               Exception Handling Process                                           #####
 ##############################################################################################################
-
-    def repair_last_expla(self, sensor_notification, action_asked):
-        update_belief_state = False
-        belief_state_repair_summary = {}
-        old_effect_summary = {}
-
-        for taskNet in self._forest:
-            repair_result = taskNet.repair_taskNet_lastnotif(sensor_notification)
-            if repair_result[0] == True:
-                new_effect_summary = copy.deepcopy(repair_result[1])
-                old_effect_summary = copy.deepcopy(repair_result[2])
-                self.belief_state_repair(belief_state_repair_summary, new_effect_summary, old_effect_summary)
-                self.set_pendingSet(self.real_create_pendingSet())
-                update_belief_state = True
-
-        if update_belief_state is True:
-            return [self._prob, belief_state_repair_summary]
-        else:
-            return [0.0, None]
-
-
 
     def repair_expla(self, sensor_notification):
         update_belief_state = False

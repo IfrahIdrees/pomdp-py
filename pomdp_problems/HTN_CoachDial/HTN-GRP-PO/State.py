@@ -48,6 +48,16 @@ class State(object):
             # print(title[i][0], title[i][1], att)
             db.update_state_belief(title[i][0], title[i][1], att)
 
+    def update_state_belief_with_language(self, exp):
+        result = self.get_attr_in_effect(exp)
+        action_list = result[0]
+        title = result[1]
+        print("Belief Update is")
+        for i, x in enumerate(title):
+            att = db.get_object_attri(x[0], x[1])
+            att = self.update_attri_status_belief(att, i, action_list, title)
+            print(title[i][0], title[i][1], att)
+            db.update_state_belief(title[i][0], title[i][1], att)
     def cal_plang_att_action(self,att,i, exp, action_list, title):
         sum_ = 0
         deltap = copy.deepcopy(att)
@@ -86,11 +96,12 @@ class State(object):
         action_list = {}
         title = []
         happen_sum = 0
-        #for action_candidate in exp._action_posterior_prob:
-            #action_list[action_candidate] = exp._action_posterior_prob[action_candidate]
-        for action_candidate in exp._prior:
-            action_list[action_candidate] = exp._prior[action_candidate]
-            happen_sum = happen_sum + action_list[action_candidate]
+        #@thesiswriting
+        for action_candidate in exp._action_posterior_prob:
+            action_list[action_candidate] = exp._action_posterior_prob[action_candidate]
+        #for action_candidate in exp._prior:
+            #action_list[action_candidate] = exp._prior[action_candidate]
+        #@thesiswriting               happen_sum = happen_sum + action_list[action_candidate]
             op = db.get_operator(action_candidate)
             for x in op["effect"]:
                 for y,v in op["effect"][x].items():
@@ -113,6 +124,9 @@ class State(object):
                 action_list[k] = (action_list[k]/happen_sum)*happen_prob   
         action_list["nothing"] = noth_prob
         
+        #@thesiswriting
+        exp._action_posterior_prob = copy.deepcopy(action_list)
+        #@thesiswriting
         return [action_list, title]
 
 

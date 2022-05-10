@@ -48,6 +48,7 @@ from env import *
 db = DB_Object()
 import config
 from State import *
+from Simulator import languageStateANDSensorUpdate
 
 import logging
 
@@ -734,9 +735,11 @@ class RewardModel(pomdp_py.RewardModel):
             # return self.goal_reward 
         elif action.name == "wait":
             return self.wait_penalty
-        elif action.name == "ask-clarification-question" and self.human_simulator.check_wrong_step(state.step_index) and sensor_notification[-1] != question_asked :  #and sensor_notification[-1] in self.human_simulator.all_wrong_actions and sensor_notification[-1] == question_asked:
+        elif action.name == "ask-clarification-question" and self.human_simulator.check_wrong_step(state.step_index):  #and sensor_notification[-1] in self.human_simulator.all_wrong_actions and sensor_notification[-1] == question_asked:
             return self.question_reward
-        elif action.name == "ask-clarification-question" and (not self.human_simulator.check_wrong_step(state.step_index) or sensor_notification[-1] == question_asked):  #not(sensor_notification[-1] in self.human_simulator.all_wrong_actions and sensor_notification[-1] == question_asked):
+        elif action.name == "ask-clarification-question" and sensor_notification[-1] != question_asked :  #and sensor_notification[-1] in self.human_simulator.all_wrong_actions and sensor_notification[-1] == question_asked:
+            return self.question_reward
+        elif action.name == "ask-clarification-question":  #not(sensor_notification[-1] in self.human_simulator.all_wrong_actions and sensor_notification[-1] == question_asked):
             return self.question_penalty
         # else:
             # return -5 #-100s
@@ -784,7 +787,7 @@ class PolicyModel(pomdp_py.RandomRollout):
         return random.sample(self.get_all_actions(), 1)[0]
 
     def get_all_actions(self, **kwargs):
-        return PolicyModel.ACTIONS
+        return self.ACTIONS
 
     def probability(self, action, state, normalized=False, **kwargs):
         raise NotImplementedError
@@ -792,6 +795,177 @@ class PolicyModel(pomdp_py.RandomRollout):
     def argmax(self, state, normalized=False, **kwargs):
         """Returns the most likely reward"""
         raise NotImplementedError
+
+    def rollout(self, state, history=None):
+        return random.sample(self.get_all_actions(state=state, history=history), 1)[0]
+
+class PreferredPolicyModel(PolicyModel):
+    """The same with PolicyModel except there is a preferred rollout policypomdp_py.RolloutPolicy"""
+    def __init__(self, action_prior):
+        self.action_prior = action_prior
+        # super().__init__(self.action_prior.robot_id,
+        #                  self.action_prior.grid_map,
+        #                  no_look=self.action_prior.no_look)
+        # self.action_prior.set_motion_actions(ALL_MOTION_ACTIONS)
+        ACTIONS = {Action("wait"), AgentAskClarificationQuestion() }
+        self.action_prior.set_all_actions(ACTIONS)
+        
+    def rollout(self, state, history):
+        # Obtain preference and returns the action in it.
+        preferences = self.action_prior.get_preferred_actions(state, history)
+        if len(preferences) > 0:
+            return random.sample(preferences, 1)[0][0]
+        else:
+            return random.sample(self.get_all_actions(state=state, history=history), 1)[0]
+
+class ActionPrior(pomdp_py.ActionPrior):
+    """greedy action prior for 'xy' motion scheme"""
+    def __init__(self, num_visits_init, val_init):
+        # self.robot_id = robot_id
+        # self.grid_map = grid_map
+        self.all_actions = None
+        self.num_visits_init = num_visits_init
+        self.val_init = val_init
+        # self.no_look = no_look
+
+    def set_all_actions(self, motion_actions):
+        self.all_actions = motion_actions
+
+    def get_belief_repair_summary(self, explaset):
+        # explaset = copy.deepcopy(explaset)
+
+        belief_state_repair_summary = {} #record to what degree the belief state should be updated
+        
+        for expla in explaset._explaset:
+            expla_repair_result = expla.repair_expla(explaset._sensor_notification)
+            if expla_repair_result[0] != 0.0:
+                explaset.belief_state_repair_summary_extend(belief_state_repair_summary, expla_repair_result)
+        
+        return belief_state_repair_summary
+        # self.belief_state_repair_execute(belief_state_repair_summary)
+        
+    def check_correct_explanations(self, explaset, sensor_notification):
+
+        for expla in explaset._explaset:
+            found = False
+            # goal_prob = expla._prob
+            correct_taskNets = 0
+            
+            for taskNet_ in expla._forest:
+                # for taskNet_ in forest:
+                ExecuteSequence =  taskNet_._execute_sequence._sequence
+                if ExecuteSequence == []:
+                    # taskNet_._expandProb *= 0.01
+                    # expla._prob*=0.01
+                    continue
+                if sensor_notification == ExecuteSequence[-1]: 
+                    found =True
+            if found == True:
+                correct_taskNets+=1
+
+        if correct_taskNets > 1:
+            return True
+        else:
+            return False
+        
+                # taskNet_._expandProb *= p_l
+                # expla._prob*=p_l
+            # delta = 0.001
+            # if len(expla._forest) == 0:
+            #     weight = 0+delta
+            # else:
+            #     weight = float(correct_taskNets)/len(expla._forest)+delta
+            
+
+    def get_preferred_actions(self, state, history):
+        """Get preferred actions. This can be used by a rollout policy as well."""
+        # Prefer actions that move the robot closer to any
+        # undetected target object in the state. If
+        # cannot move any closer, look. If the last
+        # observation contains an unobserved object, then Find.
+        #
+        # Also do not prefer actions that makes the robot rotate in place back
+        # and forth.
+        if self.all_actions is None:
+            raise ValueError("Unable to get preferred actions because"\
+                             "we don't know what motion actions there are.")
+
+        
+
+        ##check if terminal
+        preferences = set()
+        htn_explaset = copy.deepcopy(state.htn_explaset)
+
+        explaset_title = config.explaset_title
+        explaset_title_split = explaset_title.split("-")
+        # print)
+        sensor_state = state.get_object_state(explaset_title)
+        sensor_notification = sensor_state.attributes[explaset_title_split[1]][-1]
+
+        belief_confidence = False
+        highest_belief_action  = [None, 0]
+
+        if len(history) == 0:
+            preferences.add((Action("wait"), self.num_visits_init, self.val_init))
+            return preferences
+
+
+        for action, prob in htn_explaset._action_posterior_prob.items():
+            if prob> highest_belief_action[1]:
+                highest_belief_action=[action, prob]
+
+        if not htn_explaset._sensor_notification:
+            preferences.add((AgentAskClarificationQuestion(), self.num_visits_init, self.val_init))
+            return preferences
+
+        belief_state_repair = self.get_belief_repair_summary(htn_explaset)
+        if len(belief_state_repair) > 0:
+            preferences.add((AgentAskClarificationQuestion(), self.num_visits_init, self.val_init))
+            return preferences
+        
+        if len(history) > 0:
+            correct_explaset = self.check_correct_explanations(htn_explaset, sensor_notification)
+            if not correct_explaset and sensor_notification != highest_belief_action[0]:
+                preferences.add((AgentAskClarificationQuestion(), self.num_visits_init, self.val_init))
+                return preferences
+
+
+        
+        # else:
+            
+        # robot_state = state.object_states[self.robot_id]
+
+        # last_action = None
+        # if len(history) > 0:
+        #     last_action, last_observation = history[-1]
+        #     for objid in last_observation.objposes:
+        #         if objid not in robot_state["objects_found"]\
+        #            and last_observation.for_obj(objid).pose != ObjectObservation.NULL:
+        #             # We last observed an object that was not found. Then Find.
+        #             return set({(FindAction(), self.num_visits_init, self.val_init)})
+
+        # if self.no_look:
+        #     # No Look action; It's embedded in Move.
+        #     preferences = set()
+        # else:
+        #     # Always give preference to Look
+        #     preferences = set({(LookAction(), self.num_visits_init, self.val_init)})
+        # for objid in state.object_states:
+        #     if objid != self.robot_id and objid not in robot_state.objects_found:
+        #         object_pose = state.pose(objid)
+        #         cur_dist = euclidean_dist(robot_state.pose, object_pose)
+        #         neighbors =\
+        #             self.grid_map.get_neighbors(
+        #                 robot_state.pose,
+        #                 self.grid_map.valid_motions(self.robot_id,
+        #                                             robot_state.pose,
+        #                                             self.all_motion_actions))
+        #         for next_robot_pose in neighbors:
+        #             if euclidean_dist(next_robot_pose, object_pose) < cur_dist:
+        #                 action = neighbors[next_robot_pose]
+        #                 preferences.add((action,
+        #                                  self.num_visits_init, self.val_init))
+        return preferences
 
 class HTNCoachDialBelief(pomdp_py.OOBelief):
     """This is needed to make sure the belief is sampling the right
@@ -937,6 +1111,43 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
 
     if HTNCoachDial_problem.agent_type != "htn_baseline":
         if action.name == "ask-clarification-question" and feedback != None:
+            if exp._other_happen> config._other_happen and not config._last_sensor_notification_dict:
+                #update the sensor value
+                print("sensor notif is,", config._last_sensor_notification)
+                languageStateANDSensorUpdate(config._last_sensor_notification, config._output_file_name)
+                exp.setSensorNotification(config._last_sensor_notification_dict)
+
+                otherHappen = exp.action_posterior()
+
+                # if feedback == "No":
+                #     self._other_happen/=1.005#1.26
+            
+                # wrong step detect
+                if otherHappen > config._other_happen:
+                    # wrong step handling
+                    print("action posterior after bayseian inference is",  exp._action_posterior_prob)
+                    exp.handle_exception()
+                    
+                # correct step procedure
+                else:
+                    length = len(exp._explaset)
+                    
+                    # input step start a new goal (bottom up procedure to create ongoing status)
+                    # include recognition and planning
+                    exp._delete_trigger = config._real_delete_trigger
+                    exp.explaSet_expand_part1(length)
+
+                    # belief state update
+                    state = State()
+                    state.update_state_belief(exp)
+                    # input step continues an ongoing goal
+                    # include recognition and planning 
+                    exp.explaSet_expand_part2(length)
+
+                    # exp.update_without_language_feedback(prob_lang)
+        
+            # else:
+            # exp.update_with_language_feedback(feedback, exp.highest_action_PS, self._p_l)
             exp.update_with_language_feedback(feedback, exp.highest_action_PS, prob_lang)
             exp.pendingset_generate()
             # compute goal recognition result PROB and planning result PS
@@ -1004,6 +1215,7 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
             # input step continues an ongoing goal
             # include recognition and planning 
             exp.explaSet_expand_part2(length)
+            exp._delete_trigger = config._delete_trigger
             
 
                     
@@ -1073,17 +1285,22 @@ class HTNCoachDial(pomdp_py.POMDP):
         # self.hs.read_files()
         # self.hs.goal_selection()
 
+        reward_model = RewardModel(self.hs, args)
+        num_visits=10
+        val_init = reward_model.question_reward
+        action_prior = ActionPrior(num_visits, val_init)
+
         agent = pomdp_py.Agent(init_belief,
-                               PolicyModel(),
+                               PreferredPolicyModel(action_prior),
                                TransitionModel(self.hs),
                                HTNCoachDialObservationModel(),
-                               RewardModel(self.hs, args))
+                               reward_model)
         # env = pomdp_py.Environment(init_true_state,
         #                            TransitionModel(),
         #                            RewardModel())
         # self, human_simulator, explaset, init_state, RewardModel, TransitionModel
         env =  HTNCoachDialEnvironment(self.hs, explaset, init_true_state,
-                                   RewardModel(self.hs, args), TransitionModel(self.hs))
+                                   reward_model, TransitionModel(self.hs))
         # self.environment_reward_model = RewardModel(self.hs)
         # env = None
         super().__init__(agent, env, name="HTNCoachDial") ## ask kaiyu
@@ -1104,7 +1321,7 @@ class HTNCoachDial(pomdp_py.POMDP):
         HTNCoachDial_problem.agent.set_belief(init_belief, prior=True)
         return HTNCoachDial_problem
 
-def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=False, discount=0.95, gamma = 1.0, total_reward = 0, total_discounted_reward = 0, i=0, true_state = None, prob_lang = 0.95):
+def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=True, discount=0.95, gamma = 1.0, total_reward = 0, total_discounted_reward = 0, i=0, true_state = None, prob_lang = 0.95):
     # planner._db = db
     # if agent == standard
     # action = planner.plan(HTNCoachDial_problem.agent)
@@ -1138,8 +1355,8 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=False, 
     
     if debug_tree:
         dd = TreeDebugger(HTNCoachDial_problem.agent.tree)
-        import pdb; pdb.set_trace()
-    # TreeDebugger(HTNCoachDial_problem.agent.tree).pp
+        # import pdb; pdb.set_trace()
+        TreeDebugger(HTNCoachDial_problem.agent.tree).pp
 
     print("==== Step %d ====" % (i+1))
     ## true state, get from simulator

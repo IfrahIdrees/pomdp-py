@@ -184,7 +184,8 @@ class DB_Object(object):
             return label
         else:
             sensor = sensor[0]
-            randomN = random.random()
+            randomN = config.randomNs[config.randomIndex]
+            config.randomIndex+=1
             # print("randomN:",randomN, sensor["reliability"])
             if(randomN<=sensor["reliability"]):
                 label = True

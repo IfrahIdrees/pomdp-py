@@ -55,3 +55,27 @@ def realStateANDSensorUpdate(step_name, output_file_name, real_step = False):
             # print("inside for loop")
     return sensor_notification
 
+
+
+def languageStateANDSensorUpdate(step_name, output_file_name):
+    # print("Simulate step: ", step_name)
+    # with open(output_file_name, 'a') as f:
+    #     #version changed in March 14, generate a table
+    #     f.write(step_name + "\t")
+        
+    sensor_notification = []
+    print(step_name)
+    op = db.get_operator(step_name)
+    effect = op["effect"]
+    for obj in effect:
+        for att in effect[obj]:
+            # db.update_obj_Rstate(obj, att, effect[obj][att])
+            update_result = db.language_update_sensor_value(obj, att, effect[obj][att])
+            if update_result == True:
+                new_item = {}
+                new_item["object"] = obj
+                new_item["attribute"] = att
+                new_item["obj_att_value"] = effect[obj][att]
+                sensor_notification.append(new_item)
+    return sensor_notification
+

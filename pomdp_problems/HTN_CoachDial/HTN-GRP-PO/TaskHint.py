@@ -83,6 +83,28 @@ class TaskHint(object):
         with open(file_name, 'a') as f:
             f.write(str(wash_hand) + "\t" + str(make_tea) + "\t" + str(make_coffee) + "\t" + str(step_level_hint) + "\t")
         
+    def cout_taskhintInTable(self):
+        # print("")
+        step_level_hint = {}
+        for k, v in self.prompt_task.items():
+            if k in self.step_dict:
+                step_level_hint[k] = round(v[0], 8)
+                
+        wash_hand = 0.0
+        make_tea = 0.0
+        make_coffee = 0.0
+        
+        if 'wash_hand' in self.prompt_task:
+            wash_hand = round(self.prompt_task['wash_hand'][0], 8)
+        if 'make_tea' in self.prompt_task:
+            make_tea = round(self.prompt_task['make_tea'][0], 8)
+        if 'make_coffee' in self.prompt_task:
+            make_coffee = round(self.prompt_task['make_coffee'][0], 8)
+            
+        # with open(self._output_file_name, 'a') as f:
+        print(str(wash_hand) + "\t" + str(make_tea) + "\t" + str(make_coffee) + "\t" + str(step_level_hint) + "\t")
+
+      
     def print_taskhint(self):
         hint_in_level_format = {}
         for k, v in self.prompt_task.items():

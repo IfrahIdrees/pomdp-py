@@ -68,7 +68,6 @@ class explaSet(object):
            
     def setSensorNotification(self, sensor_notification):
         self._sensor_notification = copy.deepcopy(sensor_notification)
-
     def setLanguageNotification(self, language_notification):
         self._language_notification = copy.deepcopy(language_notification)
         
@@ -158,7 +157,7 @@ class explaSet(object):
                         new_line = '{:>30} {:>12}'.format("The pendingSet for this Goal: ", actions._pending_actions)
                         f.write(new_line)
                         f.write("\n")
-            f.write("\n")      
+            f.write("\n")
         '''
     ##################################################################################################    
     ####                                        Part II                                          #####
@@ -172,7 +171,8 @@ class explaSet(object):
         goal = db.find_all_method()
         mypendingSet=[]
         mystart_task = {}
-        candicatePendingSet = {}
+         #@thesiswriting
+        '''candicatePendingSet = {}
        
         goalNum = 0
         for x in goal:
@@ -193,17 +193,33 @@ class explaSet(object):
         
         for x in candicatePendingSet:
             mypendingSet.append([x, candicatePendingSet[x]])
-        #nothing has happened with prob 1
         exp = Explanation(v=1, pendingSet=mypendingSet, start_task = mystart_task)
+        self._explaset.append(exp)'''
+         
+        for x in goal:
+            if len(x["start_action"])>0:
+                mystart_task[x["m_name"]] = 0 #this task has not started yet
+                for y in x["start_action"]:
+                    if [y, 0] not in mypendingSet:
+                        mypendingSet.append([y, 0])
+                        #self._start_action[y] = 0
+                        #mystart_action[y] = 0.append(y)
+        ##provide prior prob for each action in the pending set
+        prob = float(1)/(len(mypendingSet))
+        for x in mypendingSet:
+            x[1]=prob
+        exp = Explanation(v=1, pendingSet=mypendingSet, start_task = mystart_task)    
+        #exp = Explanation(v=1, pendingSet=mypendingSet, start_action=mystart_action)
         self._explaset.append(exp)
-        
+        #@thesiswriting
     ##################################################################################################    
     ####                                        Part III                                         #####
     ####                Calculate posterior probability of actions in the pendingSet             #####
     ####                Also refer to "Step recognition.md"                                      #####
     ##################################################################################################
-    def update_prior(self):
+    def action_posterior(self, execute=False):
         self._action_posterior_prob = {}
+        otherHappen = 1
         for expla in self._explaset:           
             for action in expla._pendingSet:
                 if action[0] in self._action_posterior_prob:
@@ -211,63 +227,30 @@ class explaSet(object):
                     
                 else:
                     self._action_posterior_prob[action[0]] = action[1]
-
         #---------------------------------
-        '''   
             for start_task in expla._start_task:
                 if expla._start_task[start_task] == 0:
-                    #target_method is the highest level goal
                     target_method = db.find_method(start_task)
-                    ### float so considering 0.
-                    ##@II add added float but gave error so removed it.
                     initialize_prob = expla._prob / (len(expla._pendingSet) + len(target_method["start_action"]))
                     for start_action in target_method["start_action"]:
                         if start_action in self._action_posterior_prob:
                             self._action_posterior_prob[start_action] = self._action_posterior_prob[start_action]+initialize_prob
                         else:
-                            ## when go to else?
                             self._action_posterior_prob[start_action] = initialize_prob
-        '''
+    
         #---------------------------------
-        ## previous code sets prior over the nexxt pending task to be done p(at)
-        # print("Start of iteration, prior is", self._action_posterior_prob, file=sys.stderr)
-        self._prior = copy.deepcopy(self._action_posterior_prob)
-            
-    def action_posterior(self, execute=False):
-        # #calaculate posterior action for every low_level action in pending set
-        # # self._action_posterior_prob = {}
-        # # otherHappen = 1
-        # # for expla in self._explaset:           
-        # #     for action in expla._pendingSet:
-        # #         if action[0] in self._action_posterior_prob:
-        # #             self._action_posterior_prob[action[0]] = self._action_posterior_prob[action[0]] + action[1]
-                    
-        # #         else:
-        # #             self._action_posterior_prob[action[0]] = action[1]
 
-        # # #---------------------------------
-        # # #'''   
-        # #     for start_task in expla._start_task:
-        # #         if expla._start_task[start_task] == 0:
-        # #             #target_method is the highest level goal
-        # #             target_method = db.find_method(start_task)
-        # #             ### float so considering 0.
-        # #             ##@II add added float but gave error so removed it.
-        # #             initialize_prob = expla._prob / (len(expla._pendingSet) + len(target_method["start_action"]))
-        # #             for start_action in target_method["start_action"]:
-        # #                 if start_action in self._action_posterior_prob:
-        # #                     self._action_posterior_prob[start_action] = self._action_posterior_prob[start_action]+initialize_prob
-        # #                 else:
-        # #                     ## when go to else?
-        # #                     self._action_posterior_prob[start_action] = initialize_prob
-        # # #'''
-        # # #---------------------------------
-        # # ## previous code sets prior over the nexxt pending task to be done p(at)
-        # # print("Start of iteration, prior is", self._action_posterior_prob)
-        # # self._prior = copy.deepcopy(self._action_posterior_prob)
-        otherHappen = 1
-        self.update_prior()
-        ##@II calculate the highest PS
+        ## normalize the action posterior:
+        # sum_ = 0
+        # for action, prob in self._action_posterior_prob.items():
+        #     sum_+=prob
+        # if sum_ != 0.0:       
+        #     for action, prob in self._action_posterior_prob.items():
+        #         self._action_posterior_prob[action] = prob/sum_ 
+
+        # print("Start of iteration, prior is", self._action_posterior_prob)
+        self._prior = copy.deepcopy(self._action_posterior_prob)                           
+        
         highest_action_PS = ["", float('-inf')]
         for k, v in self._action_posterior_prob.items():
             if v > highest_action_PS[1]:
@@ -289,8 +272,10 @@ class explaSet(object):
             # otherHappen = otherHappen - plang_st * posteriorK * self._action_posterior_prob[k] #1 - priir*posteior, prob of other action happening  ## p(obs|at)*p(at)= p(at|ob) so other_happen = 1 -p(at|obs)
             # self._action_posterior_prob[k] = plang_st * self._action_posterior_prob[k] * posteriorK # p(at)*p(o|st-1,at) ## posterior p(at|ob) =  p(ob|at)*p(at)
             
+            
             # print(k, self._action_posterior_prob[k], otherHappen)
-
+        sr = float('0.'+self._output_file_name.split("/")[-1].split("_")[1].split(".")[1])
+        otherHappen = otherHappen/sr
         #nothing
         ##sensor, did you right now do this, yes (formulation ask question about current step)
         if execute:
@@ -301,20 +286,20 @@ class explaSet(object):
                 f.write(str(round(otherHappen, 4)) + "\t")
 
         ##@II
-        self.otherHappen = otherHappen
+        self._other_happen = otherHappen
         return otherHappen, observation_prob #high prob that language is correct
        
-    def cal_lang_posterior(self, highest_action_PS, action):
-        if action == highest_action_PS[0]:
-            if 'yes' in self._language_notification:
-                return 0.99
-            else:
-                return 0.01
-        else:
-            if 'yes' in self._language_notification:
-                return 0.01
-            else:
-                return 0.99
+    # def cal_lang_posterior(self, highest_action_PS, action):
+    #     if action == highest_action_PS[0]:
+    #         if 'yes' in self._language_notification:
+    #             return 0.99
+    #         else:
+    #             return 0.01
+    #     else:
+    #         if 'yes' in self._language_notification:
+    #             return 0.01
+    #         else:
+    #             return 0.99    
 
 
     #version begin from March 14, 2017
@@ -376,27 +361,22 @@ class explaSet(object):
     ##implement the bayesian network calculation for one possible state, # total prob is not 1.
     ##op: the operator in knowlege base, prob: the prior of the action, for a action in pending_set return probabilit of happening/(total prob)
     def variable_elim(self, enum, op, title, attribute, observe_prob):
-
         new_prob_1 = 0 #this action happened
         new_prob_2 = 0 #this action does not happend
-        # print("------------------------------------ op ", op["st_name"])
-        for ind, before in enumerate(enum):
-            for ind2, after in enumerate(enum):
-                # print("before", before, "after", after)
-                # print(self.check_condition_met(op, before,title, "precondition"), self.check_condition_met(op, after,title, "effect") )
+        list_ = []
+        index=0
+        for before in enum:
+            for after in enum:
+                # if index == 16:
+                    # print("here")
                 p = self.bayesian_expand(before, after, op, title, attribute, observe_prob)
-                # print(p)
-                # print("--------------------------")
+                list_.append([p,before, after])
                 new_prob_1 = new_prob_1 + p[0]
-                new_prob_2 = new_prob_2 + p[1]
-                # print(new_prob_1, new_prob_2)       
-        # try:
-        return float(new_prob_1)/(new_prob_1+new_prob_2) #p(obs| st-1, at) #p(turnonfaucet | nothing, turn_on_faucet) p(obser | nothing, switch on kettle)
-        # except ZeroDivisionError:
-            # return 0
-        # return float(new_prob_1)
-        # /(new_prob_1+new_prob_2) #p(obs| st-1, at) #p(turnonfaucet | nothing, turn_on_faucet) p(obser | nothing, switch on kettle)
-        
+                new_prob_2 = new_prob_2 + p[1]       
+                index+=1
+        return float(new_prob_1)/(new_prob_1+new_prob_2)
+        # return new_prob_1
+        # float(new_prob_1)/(new_prob_1+new_prob_2)
         
     def check_condition_met(self, op, belief_state,title, state_position="effect"):
         match = True
@@ -588,6 +568,9 @@ class explaSet(object):
                 weight = float(correct_taskNets)/len(expla._forest)+delta
             expla._prob*=weight*p_l #using tasknets as weightd for adjust probs of explanation prob. but after normalizing it is the same.
 
+            for ind in range(len(expla._pendingSet)):
+                '''expla._pendingSet[ind][1]*=weight*p_l'''
+                expla._pendingSet[ind][1]=expla._prob/len(expla._pendingSet)
 
         return
 
@@ -625,6 +608,9 @@ class explaSet(object):
                 # taskNet_._expandProb *= (1-p_l)
             expla._prob*= (1 - p_l)
             # expla._prob*= 1
+            for ind in range(len(expla._pendingSet)):
+                '''expla._pendingSet[ind][1]*=weight*p_l'''
+                expla._pendingSet[ind][1]=expla._prob/len(expla._pendingSet)
         return
    
     ##################################################################################################    
@@ -657,21 +643,26 @@ class explaSet(object):
         # print("taskhint", taskhint.__dict__)   
         return taskhint  
 
+    def print_taskhintInTable(self, taskhint):
+        taskhint.print_taskhintInTable()
+
+    def cout_taskhintInTable(self, taskhint):
+        taskhint.cout_taskhintInTable()
     ##################################################################################################    
     ####                                        Part VII                                         #####
     ####            Exception handling. This part is used when the probability of                #####
     ####            "otherHappen" is too high.                                                   #####
     ####            Exception handling can deal with (1)sensor die (2)wrong step                 #####
     ##################################################################################################
-    def adjust_posterior(self):
-        belief_state_repair_summary = {} #record to what degree the belief state should be updated
+    # def adjust_posterior(self):
+    #     belief_state_repair_summary = {} #record to what degree the belief state should be updated
 
-        for expla in self._explaset:
-            expla_repair_result = expla.repair_last_expla(self._sensor_notification, self.highest_action_PS)
-            if expla_repair_result[0] != 0.0:
-                self.belief_state_repair_summary_extend(belief_state_repair_summary, expla_repair_result)
+    #     for expla in self._explaset:
+    #         expla_repair_result = expla.repair_last_expla(self._sensor_notification, self.highest_action_PS)
+    #         if expla_repair_result[0] != 0.0:
+    #             self.belief_state_repair_summary_extend(belief_state_repair_summary, expla_repair_result)
         
-        self.belief_state_repair_execute(belief_state_repair_summary)
+    #     self.belief_state_repair_execute(belief_state_repair_summary)
 
     def handle_exception(self):
         # print("into handle exception")
@@ -728,12 +719,12 @@ class explaSet(object):
 
     def belief_state_repair_execute(self, belief_state_repair_summary):
         for effect in belief_state_repair_summary:
-            if belief_state_repair_summary[effect] > 0.7:
-                belief_state = effect.split("/")
-                opposite_attri_value = db.get_reverse_attribute_value(belief_state[0], belief_state[1], belief_state[2])
-                new_att_distribution = {}
-                new_att_distribution[belief_state[2]] = belief_state_repair_summary[effect]
-                new_att_distribution[opposite_attri_value] = 1 - belief_state_repair_summary[effect]
-                
-                db.update_state_belief(belief_state[0], belief_state[1], new_att_distribution)
+            # if belief_state_repair_summary[effect] > 0.7:
+            belief_state = effect.split("/")
+            opposite_attri_value = db.get_reverse_attribute_value(belief_state[0], belief_state[1], belief_state[2])
+            new_att_distribution = {}
+            new_att_distribution[belief_state[2]] = belief_state_repair_summary[effect]
+            new_att_distribution[opposite_attri_value] = 1 - belief_state_repair_summary[effect]
+            
+            db.update_state_belief(belief_state[0], belief_state[1], new_att_distribution)
         return

@@ -14,7 +14,6 @@ Research sponsored by AGEWELL Networks of Centers of Excellence (NCE).
 from collections import defaultdict
 from math import gamma
 # from os import EX_TEMPFAIL
-import random
 from signal import set_wakeup_fd
 import time
 
@@ -23,14 +22,11 @@ from notification import *
 from ExplaSet import *
 from State import *
 from Simulator import *
-import random
 import pomdp_py
 from pomdp_py.utils import TreeDebugger
-import random
 import numpy as np
 from HTNCoachDial import *
 import config
-random.seed(10)
 from human_simulator import *
 
 class Tracking_Engine(object):
@@ -225,6 +221,8 @@ class Tracking_Engine(object):
         '''Set the exp set and true state '''
 
         step_index,step, sensor_notification = self.HTNCoachDial_problem.hs.curr_step(step_index, action, real_step = True)
+        config._last_sensor_notification = step
+        config._last_sensor_notification_dict = sensor_notification
         # print("step index, sensor_notif is", step_index, sensor_notification)
         # TODO: see if mcts curr_step should be called.
         # self.HTNCoachDial_problem.hs.curr_step(prev_step, action)
@@ -260,6 +258,7 @@ class Tracking_Engine(object):
             
             # input step start a new goal (bottom up procedure to create ongoing status)
             # include recognition and planning
+            exp._delete_trigger = config._real_delete_trigger
             exp.explaSet_expand_part1(length)
 
             # belief state update
@@ -270,13 +269,15 @@ class Tracking_Engine(object):
             # input step continues an ongoing goal
             # include recognition and planning 
             exp.explaSet_expand_part2(length)
+            exp._delete_trigger = config._delete_trigger
+
             
 
                     
         exp.pendingset_generate()
         
         # compute goal recognition result PROB and planning result PS
-        exp.task_prob_calculate(self.HTNCoachDial_problem.hs.real_output_filename)
+        taskhint = exp.task_prob_calculate(self.HTNCoachDial_problem.hs.real_output_filename)
         
         #output PROB and PS in a file
         exp.print_explaSet()
@@ -333,7 +334,7 @@ class Tracking_Engine(object):
                 db._sensor.aggregate(pipeline)
 
                 print("going to plan")
-                total_reward, total_discounted_reward, step_index, gamma = planner_one_loop(self.HTNCoachDial_problem, self.pouct, nsteps=1, debug_tree=False,  total_reward = total_reward, total_discounted_reward = total_discounted_reward, i=step_index, true_state = step, prob_lang =self._p_l, gamma = gamma)
+                total_reward, total_discounted_reward, step_index, gamma = planner_one_loop(self.HTNCoachDial_problem, self.pouct, nsteps=1, debug_tree=True,  total_reward = total_reward, total_discounted_reward = total_discounted_reward, i=step_index, true_state = step, prob_lang =self._p_l, gamma = gamma)
                 index+=1
 
                 '''Not restore as set at start of simulation'''
