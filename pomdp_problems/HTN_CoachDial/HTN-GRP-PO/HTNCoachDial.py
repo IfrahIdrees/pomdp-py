@@ -900,12 +900,17 @@ class ActionPrior(pomdp_py.ActionPrior):
         explaset_title_split = explaset_title.split("-")
         # print)
         sensor_state = state.get_object_state(explaset_title)
-        sensor_notification = sensor_state.attributes[explaset_title_split[1]][-1]
+        ExecuteSequence = sensor_state.attributes[explaset_title_split[1]]
+        sensor_notification = ExecuteSequence[-1]
 
         belief_confidence = False
         highest_belief_action  = [None, 0]
 
+        # if sensor_notification == "turn_on_faucet_1":
+            # print("here")
+        
         if len(history) == 0:
+            print("here")
             preferences.add((Action("wait"), self.num_visits_init, self.val_init))
             return preferences
 
@@ -1287,7 +1292,7 @@ class HTNCoachDial(pomdp_py.POMDP):
 
         reward_model = RewardModel(self.hs, args)
         num_visits=10
-        val_init = reward_model.question_reward
+        val_init = reward_model.goal_reward
         action_prior = ActionPrior(num_visits, val_init)
 
         agent = pomdp_py.Agent(init_belief,
@@ -1321,7 +1326,7 @@ class HTNCoachDial(pomdp_py.POMDP):
         HTNCoachDial_problem.agent.set_belief(init_belief, prior=True)
         return HTNCoachDial_problem
 
-def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=True, discount=0.95, gamma = 1.0, total_reward = 0, total_discounted_reward = 0, i=0, true_state = None, prob_lang = 0.95):
+def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=True, discount=0.95, gamma = 1.0, total_reward = 0, total_discounted_reward = 0, i=0, true_state = None, prob_lang = 0.95, num_question_asked=0):
     # planner._db = db
     # if agent == standard
     # action = planner.plan(HTNCoachDial_problem.agent)
@@ -1357,6 +1362,9 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=True, d
         dd = TreeDebugger(HTNCoachDial_problem.agent.tree)
         # import pdb; pdb.set_trace()
         TreeDebugger(HTNCoachDial_problem.agent.tree).pp
+
+    if action == AgentAskClarificationQuestion():
+        num_question_asked+=1
 
     print("==== Step %d ====" % (i+1))
     ## true state, get from simulator
@@ -1438,7 +1446,7 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=True, d
         # Make it clearer to see what actions are taken until every time door is opened.
         # print("\n")
     i+=1
-    return total_reward, total_discounted_reward,i, gamma 
+    return total_reward, total_discounted_reward,i, gamma,num_question_asked
 
 
 def test_planner(HTNCoachDial_problem, planner, nsteps=3, debug_tree=False):

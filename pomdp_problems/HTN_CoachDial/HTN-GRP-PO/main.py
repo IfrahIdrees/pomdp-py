@@ -188,10 +188,11 @@ if __name__ == '__main__':
     config.randomNs = [random.random() for i in range((config.trials-1)*100*args.num_sims*20)]
 
     # for file_num in range(13,8,-1): #7
-    file_nums =[7,9,6,11,1,2,5,3,10,12,8]
+    file_nums =[6,7,9,11,1,2,5,3,10,12,8]
+    file_nums =[6]
     # file_nums =[9,6,11,1,2,5,3,10,12,8]
     # file_nums =[6,11,1,2,5,3,10,12,8]
-    file_nums =[11,1,2,5,3,10,12,8]
+    # file_nums =[11,1,2,5,3,10,12,8]
     # file_nums =[7]
 
     #7 0.8 and 9 0.8
@@ -221,14 +222,14 @@ if __name__ == '__main__':
             if os.path.exists(cum_rew_file_name):
                 cumulative_reward_df = pd.read_csv(cum_rew_file_name)
             else:
-                cumulative_reward_df = pd.DataFrame(columns = ['Num_Sims',"cumu_reward", "cumu_discounted_reward"])
+                cumulative_reward_df = pd.DataFrame(columns = ['Num_Sims',"cumu_reward", "cumu_discounted_reward", "num_question_asked", "normalized_num_question_asked"])
             
             if not exists(input_file_name):
                 continue
             
             ##each test case run 20 times range(1,21)
             print("changing iterations")
-            total_reward, total_discounted_reward = 0, 0
+            total_reward, total_discounted_reward,num_question_asked = 0, 0, 0
             for repeat in range(1,trials):
                 if repeat == 1:
                     # config.seed = 5999
@@ -305,11 +306,13 @@ if __name__ == '__main__':
                 # parser.add_argument("--sensor", type=float, default = x, help="sensor reliability")
                 # args = parser.parse_args()
                 tracking_engine = Tracking_Engine(no_trigger = no_notif_trigger_prob, sleep_interval = interval, cond_satisfy=cond_satisfy, cond_notsatisfy = cond_notsatisfy, delete_trigger = delete_trigger, otherHappen = other_happen, file_name = input_file_name, output_file_name = output_file_name, mcts_output_filename = mcts_output_filename, args=args, db_client = db_client)
-                total_reward_per_iter, total_discounted_reward_per_iter = tracking_engine.start()
-                cumulative_reward_df.loc[len(cumulative_reward_df.index)] = ([args.num_sims, total_reward_per_iter, total_discounted_reward_per_iter])
+                total_reward_per_iter, total_discounted_reward_per_iter, num_question_asked_per_iter, test_case_length = tracking_engine.start()
+                normalized_question_asked = num_question_asked_per_iter/test_case_length
+                cumulative_reward_df.loc[len(cumulative_reward_df.index)] = ([args.num_sims, total_reward_per_iter, total_discounted_reward_per_iter,num_question_asked_per_iter,normalized_question_asked])
 
                 total_reward += total_reward_per_iter
                 total_discounted_reward += total_discounted_reward_per_iter
+                num_question_asked+= num_question_asked_per_iter
                 print("here")
 
                 # df = pd.DataFrame(
@@ -325,6 +328,7 @@ if __name__ == '__main__':
             denominator = trials -1
             total_reward=total_reward_per_iter/ denominator
             total_discounted_reward = total_discounted_reward_per_iter / denominator
+            num_question_asked = total_discounted_reward_per_iter / denominator
                 
             # cumulative_reward_df.loc[len(cumulative_reward_df.index)] = ([args.num_sims, total_reward, total_discounted_reward])
             cumulative_reward_df.to_csv(cum_rew_file_name, index = False)

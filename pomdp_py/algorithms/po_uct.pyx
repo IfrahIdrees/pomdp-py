@@ -286,6 +286,7 @@ cdef class POUCT(Planner):
 
 
     cpdef _search(self):
+        print("about to search")
         cdef State state
         cdef Action best_action
         cdef int sims_count = 0
@@ -322,7 +323,7 @@ cdef class POUCT(Planner):
                 self._db._backup_sensor.aggregate(pipeline)
 
             state = self._agent.sample_belief()
-            # print("sampled state from belief is", state)
+            print("sampled state from belief is", state)
             # print("###########")
             with open(self._mcts_output_filename , 'a') as f:
                 f.write('\n#####\n')

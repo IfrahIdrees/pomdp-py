@@ -204,12 +204,14 @@ class Tracking_Engine(object):
         print()
         
         notif = notification(self._file_name)   ##check the current notification
+        test_case_length =  notif._notif.qsize()
         # exp = explaSet(cond_satisfy = self._cond_satisfy, cond_notsatisfy = self._cond_notsatisfy, delete_trigger = self._delete_trigger, non_happen = self._non_happen, output_file_name = self._output_file_name)
         # exp.explaInitialize()  
         exp =  self.explaset
         
         total_reward = 0
         total_discounted_reward = 0
+        num_question_asked = 0
         index=0
         #always iterate
         prev_step = None
@@ -334,7 +336,7 @@ class Tracking_Engine(object):
                 db._sensor.aggregate(pipeline)
 
                 print("going to plan")
-                total_reward, total_discounted_reward, step_index, gamma = planner_one_loop(self.HTNCoachDial_problem, self.pouct, nsteps=1, debug_tree=True,  total_reward = total_reward, total_discounted_reward = total_discounted_reward, i=step_index, true_state = step, prob_lang =self._p_l, gamma = gamma)
+                total_reward, total_discounted_reward, step_index, gamma, num_question_asked = planner_one_loop(self.HTNCoachDial_problem, self.pouct, nsteps=1, debug_tree=True,  total_reward = total_reward, total_discounted_reward = total_discounted_reward, i=step_index, true_state = step, prob_lang =self._p_l, gamma = gamma, num_question_asked=num_question_asked)
                 index+=1
 
                 '''Not restore as set at start of simulation'''
@@ -355,7 +357,7 @@ class Tracking_Engine(object):
                 print()
                 print()
         
-        return total_reward, total_discounted_reward 
+        return total_reward, total_discounted_reward, num_question_asked, test_case_length
 
         # HTN
         # with open(self.HTNCoachDial_problem.reward_output_filename, 'a') as f:

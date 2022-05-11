@@ -43,7 +43,7 @@ class human_simulator(object):
         self.mcts_output_filename = mcts_output_filename
         self.sensor_notification_dict = {} #step_name:sensor_notification
         self.wrong_per_test_case = {
-            #testcase(o indexed):[step_numbers]
+            #testcase(0 indexed):[step_numbers]
             6: [2],
             7: [2,3],
             8: [2,3,7],
