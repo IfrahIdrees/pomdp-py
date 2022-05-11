@@ -163,7 +163,7 @@ if __name__ == '__main__':
 
     sensor_reliability = [0.99,0.95, 0.9, 0.8, 0.7, 0.6]
     sensor_reliability = [0.95, 0.9, 0.8, 0.7, 0.6]
-    sensor_reliability = [0.95,0.8]
+    # sensor_reliability = [0.95,0.8]
     # sensor_reliability = [0.9, 0.8, 0.7, 0.6]
     # sensor_reliability = [0.99, 0.9, 0.6]
     # sensor_reliability = [0.9]
@@ -181,7 +181,7 @@ if __name__ == '__main__':
     #6,10
     #nohup running 6,7
     
-    trials = 3
+    trials = 7
     config.seed = 5999
     config.trials = trials
     random.seed(config.seed)
@@ -189,13 +189,16 @@ if __name__ == '__main__':
 
     # for file_num in range(13,8,-1): #7
     file_nums =[6,7,9,11,1,2,5,3,10,12,8]
-    file_nums =[6]
+    file_nums =[7,9,11,1,2,5,3,10,12,8]
+    file_nums =[9,11,1,2]
+    # 5,3,10,12,8]
+    # file_nums =[6]
     # file_nums =[9,6,11,1,2,5,3,10,12,8]
     # file_nums =[6,11,1,2,5,3,10,12,8]
     # file_nums =[11,1,2,5,3,10,12,8]
     # file_nums =[7]
-
-    #7 0.8 and 9 0.8
+    # 0.6 all and trail less
+    # 7,8 0.88 onwards
     for file_num in file_nums:
     # for file_num in range(1,13)
         if file_num == 4:

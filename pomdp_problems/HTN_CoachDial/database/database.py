@@ -284,3 +284,34 @@ class DB_Object(object):
                 }
             }
         )
+        
+    def language_update_sensor_value(self, ob_name, attri_name, value):
+        label = False
+        sensor = list(self._sensor.find({"ob_name":ob_name, "attri_name":attri_name}))
+        if len(sensor)!=1:
+            print("inside udpate_sensor_value, the number of target ob_name is bad", len(sensor))
+            sys.exit(0)
+        
+        elif sensor[0]["reliability"] == -1.0: ##in this case the sensor is missing just return False
+            print("This is an missing sensor")
+            return label
+        else:
+            sensor = sensor[0]
+            # print(random.getstate())
+            # config.seed+=10
+            # random.seed(config.seed) 
+            label = True
+            valueNum = sensor["value"][1]
+            result = self._sensor.update_many(
+                {"ob_name":ob_name, "attri_name":attri_name},
+                {
+                    "$set":{
+                        "value":[value, valueNum]
+                    }
+                
+                }
+            )
+                
+                #newsensor = list(self._sensor.find({"ob_name":ob_name, "attri_name":attri_name}))
+                
+        return label 

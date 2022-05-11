@@ -1122,7 +1122,7 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
                 languageStateANDSensorUpdate(config._last_sensor_notification, config._output_file_name)
                 exp.setSensorNotification(config._last_sensor_notification_dict)
 
-                otherHappen = exp.action_posterior()
+                otherHappen, observation_prob = exp.action_posterior()
 
                 # if feedback == "No":
                 #     self._other_happen/=1.005#1.26
@@ -1345,6 +1345,7 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=True, d
     #fixed policy -always asking question
     # belief =
     # fixed plocu -  always wait() (HTN baseline)
+    # action = A
 
     '''Restoring the state for next iteration, env variable in HTNcoachproblem should be reset'''
 
