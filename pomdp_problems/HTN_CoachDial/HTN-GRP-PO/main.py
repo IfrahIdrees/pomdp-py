@@ -156,17 +156,20 @@ if __name__ == '__main__':
     ##the otherHappen triggering threshhold
     #orignal other_happen = 0.75
     # other_happen = 0.30
-    other_happen = 0.85
+    other_happen = 0.78
     # other_happen = 0.85
     
     ##sensor set up files
 
     sensor_reliability = [0.99,0.95, 0.9, 0.8, 0.7, 0.6]
-    sensor_reliability = [0.95, 0.9, 0.8, 0.7, 0.6]
+    # sensor_reliability = [0.7, 0.6]
+    # sensor_reliability = [0.8]
+    # sensor_reliability = [0.95, 0.9, 0.8, 0.7, 0.6]
     # sensor_reliability = [0.95,0.8]
     # sensor_reliability = [0.9, 0.8, 0.7, 0.6]
     # sensor_reliability = [0.99, 0.9, 0.6]
     # sensor_reliability = [0.9]
+    # sensor_reliability = [0.7 , 0.6]
     # sensor_reliability = [0.6]
     # sensor_reliability = [0.95, 0.99, 0.6]
     # sensor_reliability = [0.99, 0.95]
@@ -181,7 +184,7 @@ if __name__ == '__main__':
     #6,10
     #nohup running 6,7
     
-    trials = 7
+    trials = 11
     config.seed = 5999
     config.trials = trials
     random.seed(config.seed)
@@ -191,6 +194,8 @@ if __name__ == '__main__':
     file_nums =[6,7,9,11,1,2,5,3,10,12,8]
     file_nums =[7,9,11,1,2,5,3,10,12,8]
     file_nums =[9,11,1,2]
+    file_nums =[1,2]
+    file_nums =[3]
     # 5,3,10,12,8]
     # file_nums =[6]
     # file_nums =[9,6,11,1,2,5,3,10,12,8]
@@ -200,7 +205,8 @@ if __name__ == '__main__':
     # 0.6 all and trail less
     # 7,8 0.88 onwards
     for file_num in file_nums:
-    # for file_num in range(1,13)
+    #6 0.95 onwards
+    # for file_num in range(3,4):
         if file_num == 4:
             continue
         # if file_num == 9:
@@ -234,11 +240,20 @@ if __name__ == '__main__':
             print("changing iterations")
             total_reward, total_discounted_reward,num_question_asked = 0, 0, 0
             for repeat in range(1,trials):
+
+                with open("random_no.txt", 'a') as f:
+                    f.write('\n=========='+str(x)+"   "+ str(repeat)+'============\n')
+
+
                 if repeat == 1:
                     # config.seed = 5999
                     config.randomIndex = 0
                     config.randomIndex = 48
-                if repeat == 2:
+                    config.realRandomIndex = 48
+                    # config.randomIndex = 112
+                    # config.realRandomIndex = 112
+                    # config.randomIndex = 125
+                if repeat == 5:
                     print("here")
                 print("sensor_reliability:",sensor_reliability, "repeating trial number", repeat, x)
                 db.method.drop()

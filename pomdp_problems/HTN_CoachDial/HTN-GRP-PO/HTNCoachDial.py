@@ -1331,6 +1331,8 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=True, d
     # if agent == standard
     # action = planner.plan(HTNCoachDial_problem.agent)
     # action = Action("wait") 
+
+    
     if HTNCoachDial_problem.agent_type == "standard":
         action = planner.plan(HTNCoachDial_problem.agent)
     elif HTNCoachDial_problem.agent_type == "htn_baseline":
@@ -1430,6 +1432,9 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=True, d
     # print("==== Step", i+1,"Tree after update:", HTNCoachDial_problem.agent.tree )
     # TODO: belief update for now update the explaset
 
+    # if true_next_state.step_index == 5:
+    #     print("here")
+    #     action = AgentAskClarificationQuestion()
     exp = update_belief(HTNCoachDial_problem,
                     action, real_observation, prob_lang) 
 

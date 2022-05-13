@@ -184,9 +184,17 @@ class DB_Object(object):
             return label
         else:
             sensor = sensor[0]
-            randomN = config.randomNs[config.randomIndex]
-            config.randomIndex+=1
+            if real_step:
+                randomN = config.randomNs[config.realRandomIndex]
+                config.realRandomIndex+=1
+            else:
+                randomN = config.randomNs[config.randomIndex]
+                config.randomIndex+=1
             # print("randomN:",randomN, sensor["reliability"])
+            if real_step:
+                with open("random_no.txt", 'a') as f:
+                    f.write(str(randomN)+'\n')
+
             if(randomN<=sensor["reliability"]):
                 label = True
                 valueNum = sensor["value"][1]

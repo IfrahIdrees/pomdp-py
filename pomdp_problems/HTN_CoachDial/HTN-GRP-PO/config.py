@@ -2,6 +2,7 @@ seed = 5999
 randomNs = []
 # _dict ={}
 randomIndex = 0
+realRandomIndex = 0
 import os, sys
 
 

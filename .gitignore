@@ -152,3 +152,4 @@ pomdp_problems/rocksample/*.txt
 pomdp_problems/HTN_CoachDial/HTN-GRP-PO/D*
 
 
+pomdp_problems/HTN_CoachDial/old_experiments/
