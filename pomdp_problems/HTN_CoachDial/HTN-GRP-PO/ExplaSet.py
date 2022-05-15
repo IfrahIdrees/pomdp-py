@@ -42,7 +42,9 @@ class explaSet(object):
         self._prior = {}
         self._language_notification = []
         self.highest_action_PS = []
-        self.otherHappen = None
+        self._other_happen = None
+        # self.otherHappen = None
+        # self._other_happen = 0
         self._mcts_output_filename = mcts_output_filename
         self.mcts_step_index = -1
     

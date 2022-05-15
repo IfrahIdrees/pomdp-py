@@ -79,6 +79,7 @@ class TaskHint(object):
             make_coffee = round(self.prompt_task['make_coffee'][0], 8)
             
         if file_name == "":
+            print(str(wash_hand) + "\t" + str(make_tea) + "\t" + str(make_coffee) + "\t" + str(step_level_hint) + "\t")
             return 
         with open(file_name, 'a') as f:
             f.write(str(wash_hand) + "\t" + str(make_tea) + "\t" + str(make_coffee) + "\t" + str(step_level_hint) + "\t")

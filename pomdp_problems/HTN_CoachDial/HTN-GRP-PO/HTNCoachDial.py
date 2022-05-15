@@ -236,6 +236,7 @@ class AgentAskClarificationQuestion(Action):
 
     def __init__(self):
         super().__init__("ask-clarification-question")
+        self.question_asked = None
 
     def update_question_asked(self, state):
         # print("state in action is", state)
@@ -252,7 +253,7 @@ class AgentAskClarificationQuestion(Action):
                 highest_action_PS = [k,v]
         #TODO: actual epxlaset not updated
         # exp.highest_action_PS = highest_action_PS 
-
+        self.question_asked = highest_action_PS[0]
         return highest_action_PS[0]
         # return highest_action_PS
         # return state
@@ -845,7 +846,7 @@ class ActionPrior(pomdp_py.ActionPrior):
         # self.belief_state_repair_execute(belief_state_repair_summary)
         
     def check_correct_explanations(self, explaset, sensor_notification):
-
+        correct_taskNets = 0
         for expla in explaset._explaset:
             found = False
             # goal_prob = expla._prob
@@ -910,7 +911,7 @@ class ActionPrior(pomdp_py.ActionPrior):
             # print("here")
         
         if len(history) == 0:
-            print("here")
+            print("history is 0, here")
             preferences.add((Action("wait"), self.num_visits_init, self.val_init))
             return preferences
 
@@ -1156,8 +1157,10 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
             exp.update_with_language_feedback(feedback, exp.highest_action_PS, prob_lang)
             exp.pendingset_generate()
             # compute goal recognition result PROB and planning result PS
-            taskhint = exp.task_prob_calculate("")
+            taskhint = exp.task_prob_calculate(HTNCoachDial_problem.hs.real_output_filename)
             print("taskhint is", taskhint.__dict__)
+            #output PROB and PS in a file
+            exp.print_explaSet()
             
             #output PROB and PS in a file
             ## @II here decide prob of recognizing each task
@@ -1180,6 +1183,9 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
     s2_step_name = None
     if not HTNCoachDial_problem.env.human_simulator.check_terminal_state(s2_step_index):
         _, s2_step_name , sensor_notification = HTNCoachDial_problem.env.human_simulator.curr_step(s1_step_index, None, real_step=True)
+        config._last_sensor_notification = s2_step_name
+        config._last_sensor_notification_dict = sensor_notification
+        
         # s2_step_name = HTNCoachDial_problem.env.human_simulator.return_step(s2_step_index) 
         ## add last sensor_notification to explaset.
         key = config.explaset_title
@@ -1203,10 +1209,6 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
         else:
             # print("updating explaset")
             length = len(exp._explaset)
-
-            ##incorporate probaility of not getting language feedback
-            if HTNCoachDial_problem.agent_type != "htn_baseline":
-                exp.update_without_language_feedback(prob_lang)
             
             # input step start a new goal (bottom up procedure to create ongoing status)
             # include recognition and planning
@@ -1220,6 +1222,10 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
             # input step continues an ongoing goal
             # include recognition and planning 
             exp.explaSet_expand_part2(length)
+
+            ##incorporate probaility of not getting language feedback
+            if HTNCoachDial_problem.agent_type != "htn_baseline":
+                exp.update_without_language_feedback(prob_lang)
             exp._delete_trigger = config._delete_trigger
             
 
@@ -1228,11 +1234,13 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
         
         # compute goal recognition result PROB and planning result PS
         if execute:
-            taskhint = exp.task_prob_calculate(HTNCoachDial_problem.hs.real_output_filename)
-            exp.print_explaSet()
-        else:
-            taskhint = exp.task_prob_calculate(HTNCoachDial_problem.hs.mcts_output_filename)
-            exp.mcts_print_explaSet()
+            # taskhint = exp.task_prob_calculate(HTNCoachDial_problem.hs.real_output_filename)
+            taskhint = exp.task_prob_calculate("")
+            # exp.cout_taskhintInTable(taskhint)
+            # exp.print_explaSet()
+        # else:
+        #     taskhint = exp.task_prob_calculate(HTNCoachDial_problem.hs.mcts_output_filename)
+        #     exp.mcts_print_explaSet()
 
         
     worldstate_belief, _, _ = convert_object_belief_to_histogram(list(db._state.find()))
@@ -1331,9 +1339,26 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=True, d
     # if agent == standard
     # action = planner.plan(HTNCoachDial_problem.agent)
     # action = Action("wait") 
+    # action_dict={
+    #     1:0
+    #     2:0
+    #     3:1
+    #     4:1
+    #     5:
+    #     6:
+    #     7:
+    #     8:
+    #     9:
+    #     10:
+    #     11:
+    #     12:
+    #     13:
+    # }
 
-    
     if HTNCoachDial_problem.agent_type == "standard":
+        # if i == 0:
+        #     action = Action("wait")
+        # else:
         action = planner.plan(HTNCoachDial_problem.agent)
     elif HTNCoachDial_problem.agent_type == "htn_baseline":
         action = Action("wait")

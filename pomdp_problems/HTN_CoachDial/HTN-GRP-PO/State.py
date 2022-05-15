@@ -101,7 +101,8 @@ class State(object):
             action_list[action_candidate] = exp._action_posterior_prob[action_candidate]
         #for action_candidate in exp._prior:
             #action_list[action_candidate] = exp._prior[action_candidate]
-        #@thesiswriting               happen_sum = happen_sum + action_list[action_candidate]
+        #@thesiswriting
+            happen_sum = happen_sum + action_list[action_candidate]
             op = db.get_operator(action_candidate)
             for x in op["effect"]:
                 for y,v in op["effect"][x].items():

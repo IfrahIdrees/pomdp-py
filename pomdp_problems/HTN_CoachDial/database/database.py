@@ -17,7 +17,7 @@ import sys
 sys.dont_write_bytecode = True
 from pymongo import MongoClient
 import pymongo
-import random
+# import random
 # client = MongoClient()
 # db = client.smart_home3
 import config

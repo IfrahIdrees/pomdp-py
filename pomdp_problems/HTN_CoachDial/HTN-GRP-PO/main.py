@@ -156,7 +156,7 @@ if __name__ == '__main__':
     ##the otherHappen triggering threshhold
     #orignal other_happen = 0.75
     # other_happen = 0.30
-    other_happen = 0.78
+    other_happen = 0.85 #0.87
     # other_happen = 0.85
     
     ##sensor set up files
@@ -165,7 +165,7 @@ if __name__ == '__main__':
     # sensor_reliability = [0.7, 0.6]
     # sensor_reliability = [0.8]
     # sensor_reliability = [0.95, 0.9, 0.8, 0.7, 0.6]
-    # sensor_reliability = [0.95,0.8]
+    sensor_reliability = [0.99,0.95]
     # sensor_reliability = [0.9, 0.8, 0.7, 0.6]
     # sensor_reliability = [0.99, 0.9, 0.6]
     # sensor_reliability = [0.9]
@@ -192,21 +192,19 @@ if __name__ == '__main__':
 
     # for file_num in range(13,8,-1): #7
     file_nums =[6,7,9,11,1,2,5,3,10,12,8]
-    file_nums =[7,9,11,1,2,5,3,10,12,8]
-    file_nums =[9,11,1,2]
-    file_nums =[1,2]
-    file_nums =[3]
+    file_nums =[7,9,11,1,2,3,5,6,10,12,8]
+    # file_nums =[9,11,1,2]
+    # file_nums =[1,2]
+    # file_nums =[1]
     # 5,3,10,12,8]
-    # file_nums =[6]
+    # file_nums =[2]
     # file_nums =[9,6,11,1,2,5,3,10,12,8]
     # file_nums =[6,11,1,2,5,3,10,12,8]
-    # file_nums =[11,1,2,5,3,10,12,8]
+    file_nums =[3,5,6,10,12,8]
     # file_nums =[7]
-    # 0.6 all and trail less
-    # 7,8 0.88 onwards
     for file_num in file_nums:
-    #6 0.95 onwards
-    # for file_num in range(3,4):
+    #5 0.8
+    # for file_num in range(1,2):
         if file_num == 4:
             continue
         # if file_num == 9:
@@ -242,7 +240,7 @@ if __name__ == '__main__':
             for repeat in range(1,trials):
 
                 with open("random_no.txt", 'a') as f:
-                    f.write('\n=========='+str(x)+"   "+ str(repeat)+'============\n')
+                    f.write('\n=========='+str(file_num)+"  "+str(x)+"   "+ str(repeat)+'============\n')
 
 
                 if repeat == 1:
@@ -250,10 +248,15 @@ if __name__ == '__main__':
                     config.randomIndex = 0
                     config.randomIndex = 48
                     config.realRandomIndex = 48
-                    # config.randomIndex = 112
-                    # config.realRandomIndex = 112
-                    # config.randomIndex = 125
-                if repeat == 5:
+                    # config.randomIndex = 300
+                    # config.realRandomIndex = 96
+                    # config.randomIndex = 1776
+                    # config.realRandomIndex = 104
+                    # config.randomIndex = 48
+                    
+                    
+
+                if repeat == 9:
                     print("here")
                 print("sensor_reliability:",sensor_reliability, "repeating trial number", repeat, x)
                 db.method.drop()
@@ -331,7 +334,7 @@ if __name__ == '__main__':
                 total_reward += total_reward_per_iter
                 total_discounted_reward += total_discounted_reward_per_iter
                 num_question_asked+= num_question_asked_per_iter
-                print("here")
+                print("out of step here")
 
                 # df = pd.DataFrame(
                 # {
