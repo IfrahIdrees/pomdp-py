@@ -204,9 +204,9 @@ if __name__ == '__main__':
     # file_nums =[6,11,1,2,5,3,10,12,8]
     # file_nums =[3,5,6,10,12,8]
     # file_nums =[7]
-    for file_num in file_nums:
+    # for file_num in file_nums:
     #5 0.8
-    # for file_num in range(1,2):
+    for file_num in range(1,8):
         if file_num == 4:
             continue
         # if file_num == 9:

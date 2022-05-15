@@ -1156,12 +1156,12 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
             # else:
             # exp.update_with_language_feedback(feedback, exp.highest_action_PS, self._p_l)
             exp.update_with_language_feedback(feedback, exp.highest_action_PS, prob_lang)
-            exp.pendingset_generate()
-            # compute goal recognition result PROB and planning result PS
-            taskhint = exp.task_prob_calculate(HTNCoachDial_problem.hs.real_output_filename)
-            print("taskhint is", taskhint.__dict__)
-            #output PROB and PS in a file
-            exp.print_explaSet()
+    exp.pendingset_generate()
+    # compute goal recognition result PROB and planning result PS
+    taskhint = exp.task_prob_calculate(HTNCoachDial_problem.hs.real_output_filename)
+    print("taskhint is", taskhint.__dict__)
+    #output PROB and PS in a file
+    exp.print_explaSet()
             
             #output PROB and PS in a file
             ## @II here decide prob of recognizing each task
