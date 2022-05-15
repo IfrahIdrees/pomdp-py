@@ -165,8 +165,8 @@ if __name__ == '__main__':
     # sensor_reliability = [0.7, 0.6]
     # sensor_reliability = [0.8]
     # sensor_reliability = [0.95, 0.9, 0.8, 0.7, 0.6]
-    sensor_reliability = [0.99,0.95]
-    # sensor_reliability = [0.9, 0.8, 0.7, 0.6]
+    # sensor_reliability = [0.99,0.95]
+    # sensor_reliability = [0.8, 0.7, 0.6]
     # sensor_reliability = [0.99, 0.9, 0.6]
     # sensor_reliability = [0.9]
     # sensor_reliability = [0.7 , 0.6]
@@ -193,14 +193,16 @@ if __name__ == '__main__':
     # for file_num in range(13,8,-1): #7
     file_nums =[6,7,9,11,1,2,5,3,10,12,8]
     file_nums =[7,9,11,1,2,3,5,6,10,12,8]
+    file_nums =[7,9,11,1,2] #,3,5,6,10,12,8]
     # file_nums =[9,11,1,2]
     # file_nums =[1,2]
     # file_nums =[1]
+    # file_nums =[9, 11]
     # 5,3,10,12,8]
     # file_nums =[2]
     # file_nums =[9,6,11,1,2,5,3,10,12,8]
     # file_nums =[6,11,1,2,5,3,10,12,8]
-    file_nums =[3,5,6,10,12,8]
+    # file_nums =[3,5,6,10,12,8]
     # file_nums =[7]
     for file_num in file_nums:
     #5 0.8
@@ -253,10 +255,12 @@ if __name__ == '__main__':
                     # config.randomIndex = 1776
                     # config.realRandomIndex = 104
                     # config.randomIndex = 48
+                    # config.realRandomIndex = 76
+                    # config.randomIndex = 48
                     
                     
 
-                if repeat == 9:
+                if repeat == 5:
                     print("here")
                 print("sensor_reliability:",sensor_reliability, "repeating trial number", repeat, x)
                 db.method.drop()

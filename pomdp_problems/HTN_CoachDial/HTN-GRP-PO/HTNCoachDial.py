@@ -1149,6 +1149,7 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
                     # input step continues an ongoing goal
                     # include recognition and planning 
                     exp.explaSet_expand_part2(length)
+                    exp._delete_trigger = config._delete_trigger
 
                     # exp.update_without_language_feedback(prob_lang)
         
@@ -1212,6 +1213,7 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
             
             # input step start a new goal (bottom up procedure to create ongoing status)
             # include recognition and planning
+            exp._delete_trigger = config._real_delete_trigger
             exp.explaSet_expand_part1(length)
 
             # belief state update
