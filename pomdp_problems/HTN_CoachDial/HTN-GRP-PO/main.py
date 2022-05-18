@@ -105,6 +105,7 @@ from os.path import exists
 import config
 import logging
 import argparse
+import csv
 
 # sys.path.append(ROOT_DIR)
 # sys.path.append(os.path.join(ROOT_DIR, 'utils'))
@@ -180,7 +181,7 @@ if __name__ == '__main__':
     # sensor_reliability = [0.95]
     # sensor_reliability = [0.99,0.95]
     # sensor_reliability = [0.8, 0.7, 0.6]
-    # sensor_reliability = [0.99, 0.9, 0.6]
+    sensor_reliability = [0.99, 0.8, 0.6]
     # sensor_reliability = [0.9]
     # sensor_reliability = [0.7 , 0.6]
     # sensor_reliability = [0.6]
@@ -197,11 +198,13 @@ if __name__ == '__main__':
     #6,10
     #nohup running 6,7
     
-    trials = 21
+    # trials = 21
+    trials = 11
     config.seed = 5999
     config.trials = trials
     random.seed(config.seed)
-    config.randomNs = [random.random() for i in range((config.trials-1)*100*args.num_sims*20)]
+    # config.randomNs = [random.random() for i in range((config.trials-1)*100*args.num_sims*20)]
+    config.randomNs = [random.random() for i in range((21)*1000*args.num_sims*20)]
     # config.randomNs = [0.7514062100906035, 1.0, 0.9205949710733476, 0.9367211756841427, 0.758452287599932, 0.1473436494008996, 0.597971828480958, 0.3083822735356848, 0.21739233925559065, 0.5533682982520421, 0.6290635522399637, 0.05604972577945, 0.07294319938326999, 0.3332888354512096]
     # for file_num in range(13,8,-1): #7
     file_nums =[6,7,9,11,1,2,5,3,10,12,8]
@@ -214,18 +217,31 @@ if __name__ == '__main__':
     # 5,3,10,12,8]
     # file_nums =[2]
     # file_nums =[9,6,11,1,2,5,3,10,12,8]
-    # file_nums =[6,11,1,2,5,3,10,12,8]
+    # file_nums =[6,11,1,2,5,3,10,12,8],
     # file_nums =[3,5,6,10,12,8]
     # repeating trial number 3 0.8 has the weird issue
-    file_nums =[10]
-    # for file_num in file_nums:
-    #5 0.8
+    file_nums =[1,2,7,9,11]
+    # file_nums =[1,2,7,9,11]
     print("i am going to start the main loop")
-    for file_num in range(1,4):
+
+    if not exists("config_info.csv"):
+        with open('config_info.csv', 'a', newline='') as csvfile:
+            spamwriter = csv.writer(csvfile, delimiter=',',
+                                    quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            # spamwriter.writerow(['Spam'] * 5 + ['Baked Beans'])
+            spamwriter.writerow(["max_depth","num_sims","d","e","file_num", "reliability","trial_num", "config.randomIndex","config.realRandomIndex"])          
+
+    for file_num in file_nums:
+    #5 0.
+    # for file_num in range(1,4):
         if file_num == 4:
             continue
         # if file_num == 9:
         #     sensor_reliability = [0.99]
+        # if file_num == 1:
+        #     sensor_reliability = [0.99, 0.8, 0.6]
+        # if file_num == 2:
+        #     sensor_reliability = [0.99, 0.8, 0.6]
         for x in sensor_reliability:
             ##output file name
             # if config.RANDOM_BASELINE:
@@ -384,7 +400,16 @@ if __name__ == '__main__':
             cumulative_reward_df.to_csv(cum_rew_file_name, index = False)
             # cumulative_reward_df.iloc[-1, accuracy_df.columns.get_loc(str(reliability ))] = round(accurracy, 4)
             print("I am good until now")
-            
+
+        # with open("config_info.txt", 'a') as f:
+        #     f.write('\n=========='+str(file_num)+"  "+str(x)+"   "+ str(repeat)+'============\n')
+        #     f.write('config.randomIndex: '+str(config.randomIndex)+ 'config.realRandomIndex: '+str(config.realRandomIndex)) 
+        # import csv
+            with open('config_info.csv', 'a', newline='') as csvfile:
+                spamwriter = csv.writer(csvfile, delimiter=',',
+                                        quotechar='|', quoting=csv.QUOTE_MINIMAL)
+                # spamwriter.writerow(['Spam'] * 5 + ['Baked Beans'])
+                spamwriter.writerow([args.maxsteps, args.num_sims, args.d,args.e,file_num, str(x),str(repeat),config.randomIndex,config.realRandomIndex])           
 else:
     print('I am being imported')    
 

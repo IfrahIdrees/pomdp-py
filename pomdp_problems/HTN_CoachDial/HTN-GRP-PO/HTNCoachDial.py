@@ -1214,7 +1214,7 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
     feedback = real_observation.get_lang_objattr(feedback_title)
     
     # return highest_action_PS[0]
-
+    question_asked_arg =  exp.highest_action_PS[0]
     if HTNCoachDial_problem.agent_type != "htn_baseline":
         if action.name == "ask-clarification-question" and feedback != None:
             if exp._other_happen> config._other_happen and not config._last_sensor_notification_dict:
@@ -1255,7 +1255,7 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
         
             # else:
             # exp.update_with_language_feedback(feedback, exp.highest_action_PS, self._p_l)
-            exp.update_with_language_feedback(feedback, exp.highest_action_PS, prob_lang)
+            exp.update_with_language_feedback(feedback, question_asked_arg, prob_lang)
     exp.pendingset_generate()
     # compute goal recognition result PROB and planning result PS
     taskhint = exp.task_prob_calculate(HTNCoachDial_problem.hs.real_output_filename)
@@ -1536,7 +1536,7 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=True, d
         f.write("True state: %s" % true_state + "\n")
         f.write("Belief: %s" % HTNCoachDial_problem.agent.cur_belief.__str__ + "\n")
         f.write("Action: %s" % str(action) + "\n")
-        f.write("Question Asked:", highest_action)
+        f.write("Question Asked: %s" % str(highest_action) + "\n")
         f.write("Reward: %s" % str(env_reward)+ "\n")
 
     '''Print Statements'''
@@ -1548,6 +1548,13 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=True, d
     total_reward += env_reward
     total_discounted_reward += env_reward * gamma
     gamma *= discount
+
+    real_observation = HTNCoachDial_problem.env.provide_observation(HTNCoachDial_problem.agent.observation_model,
+                                                              action)
+    # real_observation = TigerObservation(HTNCoachDial_problem.env.state.name)
+    print(">> Observation: %s" % real_observation)
+    with open(HTNCoachDial_problem.reward_output_filename, 'a') as f:
+        f.write("Feedback Recieved: %s" % str(real_observation)+ "\n")
 
     with open(HTNCoachDial_problem.reward_output_filename, 'a') as f:
         f.write("Reward (Cumulative): %s" % str(total_reward) + "\n")
@@ -1563,16 +1570,10 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=True, d
     # print("Reward (Cumulative Discounted): %s" % str(total_discounted_reward))
         
     
-        
     # Let's create some simulated real observation; Update the belief
     # Creating true observation for sanity checking solver behavior.
     # In general, this observation should be sampled from agent's observation model. 
-    real_observation = HTNCoachDial_problem.env.provide_observation(HTNCoachDial_problem.agent.observation_model,
-                                                              action)
-    # real_observation = TigerObservation(HTNCoachDial_problem.env.state.name)
-    print(">> Observation: %s" % real_observation)
-    with open(HTNCoachDial_problem.reward_output_filename, 'a') as f:
-        f.write("Feedback Recieved: %s" % str(real_observation)+ "\n")
+    
     HTNCoachDial_problem.agent.update_history(action, real_observation)
 
     # If the planner is POMCP, planner.update also updates agent belief.
