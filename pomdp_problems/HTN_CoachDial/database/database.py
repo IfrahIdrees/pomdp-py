@@ -21,6 +21,8 @@ import pymongo
 # client = MongoClient()
 # db = client.smart_home3
 import config
+global COUNT
+COUNT = 0
 
 if config.baseline:
     client = MongoClient()
@@ -168,6 +170,7 @@ class DB_Object(object):
     # the returned "label" tells if the sensor state is updated. 
     # "False": No, "True": Yes
     def update_sensor_value(self, ob_name, attri_name, value, real_step = False):
+        global COUNT
         label = False
         # if real_step:
         #     sensor = list(self._sensor.find({"ob_name":ob_name, "attri_name":attri_name}))
@@ -191,10 +194,20 @@ class DB_Object(object):
                 randomN = config.randomNs[config.randomIndex]
                 config.randomIndex+=1
             # print("randomN:",randomN, sensor["reliability"])
+            # if COUNT == 19:
+            #     randomN  = 0.98
             if real_step:
                 with open("random_no.txt", 'a') as f:
-                    f.write(str(randomN)+'\n')
+                    # f.write("**********real*************"+ str(randomN) +'\n')
+                    f.write("**********real*************"+ str(randomN) +"COUNT: "+str(COUNT)+'\n')
+            else:
+                with open("random_no.txt", 'a') as f:
+                    # f.write(str(randomN)+'\n')  
+                    f.write(str(randomN)+"COUNT: "+str(COUNT)+'\n')  
 
+            
+            
+            COUNT+=1
             if(randomN<=sensor["reliability"]):
                 label = True
                 valueNum = sensor["value"][1]

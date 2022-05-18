@@ -47,6 +47,7 @@ class explaSet(object):
         # self._other_happen = 0
         self._mcts_output_filename = mcts_output_filename
         self.mcts_step_index = -1
+        self.goal_recog_prob = None
     
     ##################################################################################################    
     ####                                        Part I                                           #####
@@ -641,7 +642,8 @@ class explaSet(object):
 
         taskhint.average_level()
 
-        taskhint.print_taskhintInTable(filename)
+        goal_recog_prob = taskhint.print_taskhintInTable(filename)
+        self.goal_recog_prob = goal_recog_prob
         # print("taskhint", taskhint.__dict__)   
         return taskhint  
 

@@ -78,11 +78,13 @@ class TaskHint(object):
         if 'make_coffee' in self.prompt_task:
             make_coffee = round(self.prompt_task['make_coffee'][0], 8)
             
+        goal_recog_prob = str(wash_hand) + "\t" + str(make_tea) + "\t" + str(make_coffee) + "\t" + str(step_level_hint) + "\t"
         if file_name == "":
-            print(str(wash_hand) + "\t" + str(make_tea) + "\t" + str(make_coffee) + "\t" + str(step_level_hint) + "\t")
+            print(goal_recog_prob)
             return 
         with open(file_name, 'a') as f:
-            f.write(str(wash_hand) + "\t" + str(make_tea) + "\t" + str(make_coffee) + "\t" + str(step_level_hint) + "\t")
+            f.write(goal_recog_prob)
+        return goal_recog_prob
         
     def cout_taskhintInTable(self):
         # print("")

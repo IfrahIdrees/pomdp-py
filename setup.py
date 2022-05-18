@@ -11,6 +11,7 @@ with open("README.rst", 'r') as f:
 # Build cython files as extensions
 def build_extensions(pkg_name, major_submodules):
     cwd = os.path.abspath(os.path.dirname(__file__))
+    print("Current working directory:", cwd)
     extensions = []
     for subm in major_submodules:
         for f in os.listdir(os.path.join(cwd, pkg_name, subm.replace(".", "/"))):
@@ -18,6 +19,7 @@ def build_extensions(pkg_name, major_submodules):
                 filename = os.path.splitext(f)[0]
                 ext_name = f"{pkg_name}.{subm}.{filename}"
                 ext_path = os.path.join(pkg_name, subm.replace(".", "/"), f)
+                print(f"*****Extension Path:", ext_path)
                 extensions.append(Extension(ext_name, [ext_path]))
 
     return extensions

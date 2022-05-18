@@ -84,8 +84,20 @@ import sys
 sys.dont_write_bytecode = True
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(BASE_DIR)
-sys.path.append(BASE_DIR)
-sys.path.append(ROOT_DIR+"/database")
+print(f"THe base directory: {BASE_DIR}")
+sys.path.insert(0, BASE_DIR)
+sys.path.insert(0, ROOT_DIR+"/database")
+sys.path.insert(0, os.path.dirname(os.path.dirname(ROOT_DIR)))
+# /home/ifrah/DDrive/Research_Projects/CoachDial/HTN-Language-ObservationalModel-pomdpdevelopbranch/pomdp-py
+
+# to_remove = "/home/ifrah/DDrive/Research_Projects/CoachDial/HTN-Language-ObservationalModel-pomdpdevelopbranch"
+# new_path = []
+# for path in sys.path:
+#     if to_remove not in path:
+#         new_path.append(path)
+#     print("The module search path", path)
+# print(new_path)
+# sys.path = list(new_path)
 
 
 from pymongo import MongoClient
@@ -148,7 +160,7 @@ if __name__ == '__main__':
     #threshhold that an explanation is no longer maintain
     delete_trigger = 0.001
     # config.mcts_delete_trigger = 0.001
-    config._real_delete_trigger = 0.0000095
+    config._real_delete_trigger = 0.000095 #(0.000095 works with time)
     
     ##if there is a notification, the probability that nothing happend
     nothing_happen = 0.01
@@ -164,7 +176,8 @@ if __name__ == '__main__':
     sensor_reliability = [0.99,0.95, 0.9, 0.8, 0.7, 0.6]
     # sensor_reliability = [0.7, 0.6]
     # sensor_reliability = [0.8]
-    # sensor_reliability = [0.95, 0.9, 0.8, 0.7, 0.6]
+    sensor_reliability = [0.95, 0.9, 0.8, 0.7, 0.6]
+    sensor_reliability = [0.95]
     # sensor_reliability = [0.99,0.95]
     # sensor_reliability = [0.8, 0.7, 0.6]
     # sensor_reliability = [0.99, 0.9, 0.6]
@@ -176,7 +189,7 @@ if __name__ == '__main__':
     # sensor_reliability = [0.99,0.6]
     # sensor_reliability = [0.6]
     # sensor_reliability = [1]
-    # sensor_reliability = [0.8]
+    sensor_reliability = [0.8]
     # sensor_reliability = [0.5, 0.8]
     # sensor_reliability = [0.8]
 
@@ -184,12 +197,12 @@ if __name__ == '__main__':
     #6,10
     #nohup running 6,7
     
-    trials = 11
+    trials = 3
     config.seed = 5999
     config.trials = trials
     random.seed(config.seed)
     config.randomNs = [random.random() for i in range((config.trials-1)*100*args.num_sims*20)]
-
+    # config.randomNs = [0.7514062100906035, 1.0, 0.9205949710733476, 0.9367211756841427, 0.758452287599932, 0.1473436494008996, 0.597971828480958, 0.3083822735356848, 0.21739233925559065, 0.5533682982520421, 0.6290635522399637, 0.05604972577945, 0.07294319938326999, 0.3332888354512096]
     # for file_num in range(13,8,-1): #7
     file_nums =[6,7,9,11,1,2,5,3,10,12,8]
     file_nums =[7,9,11,1,2,3,5,6,10,12,8]
@@ -203,9 +216,11 @@ if __name__ == '__main__':
     # file_nums =[9,6,11,1,2,5,3,10,12,8]
     # file_nums =[6,11,1,2,5,3,10,12,8]
     # file_nums =[3,5,6,10,12,8]
-    # file_nums =[7]
+    # repeating trial number 3 0.8 has the weird issue
+    file_nums =[10]
     # for file_num in file_nums:
     #5 0.8
+    print("i am going to start the main loop")
     for file_num in range(1,8):
         if file_num == 4:
             continue
@@ -248,6 +263,8 @@ if __name__ == '__main__':
                 if repeat == 1:
                     # config.seed = 5999
                     config.randomIndex = 0
+                    # config.randomIndex = 48
+                    config.realRandomIndex = 0
                     config.randomIndex = 48
                     config.realRandomIndex = 48
                     # config.randomIndex = 300
@@ -258,9 +275,16 @@ if __name__ == '__main__':
                     # config.realRandomIndex = 76
                     # config.randomIndex = 48
                     
+                    # config.realRandomIndex = 125 ####(imp for current debug) 
+                    # config.randomIndex = 972 ####(imp for current debug) 
+                    # config.realRandomIndex = 132
+                    # config.randomIndex = 1672
+                    # config.realRandomIndex 133
+                    # config.randomIndex 1972
+                    
                     
 
-                if repeat == 5:
+                if repeat == 2:
                     print("here")
                 print("sensor_reliability:",sensor_reliability, "repeating trial number", repeat, x)
                 db.method.drop()
@@ -330,6 +354,7 @@ if __name__ == '__main__':
                 # parser = argparse.ArgumentParser()
                 # parser.add_argument("--sensor", type=float, default = x, help="sensor reliability")
                 # args = parser.parse_args()
+                
                 tracking_engine = Tracking_Engine(no_trigger = no_notif_trigger_prob, sleep_interval = interval, cond_satisfy=cond_satisfy, cond_notsatisfy = cond_notsatisfy, delete_trigger = delete_trigger, otherHappen = other_happen, file_name = input_file_name, output_file_name = output_file_name, mcts_output_filename = mcts_output_filename, args=args, db_client = db_client)
                 total_reward_per_iter, total_discounted_reward_per_iter, num_question_asked_per_iter, test_case_length = tracking_engine.start()
                 normalized_question_asked = num_question_asked_per_iter/test_case_length

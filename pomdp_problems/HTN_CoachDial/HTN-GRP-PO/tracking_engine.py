@@ -134,6 +134,7 @@ class Tracking_Engine(object):
         self.init_belief.htn_explaset_action_posterior = self.explaset.action_posterior
         # self.observation_prob = {}
         ##declare the hs
+        print("******This is the initial beleif:", self.init_belief)
         hs = human_simulator(config._output_file_name, config._mcts_output_filename)
         
         self.HTNCoachDial_problem = HTNCoachDial(  # observation noise
@@ -145,6 +146,7 @@ class Tracking_Engine(object):
         num_sims= args.num_sims
         discount_factor=args.d
         exploration_const=args.e
+        print(f"THIs is the module path {pomdp_py.__file__}")
         self.pouct = pomdp_py.POUCT(max_depth=max_depth, discount_factor=discount_factor,
                             num_sims=num_sims, exploration_const=exploration_const,
                             rollout_policy=self.HTNCoachDial_problem.agent.policy_model,
@@ -170,7 +172,7 @@ class Tracking_Engine(object):
 
         with open(self.HTNCoachDial_problem.reward_output_filename , 'a') as f:
             f.write('\n========================\n')
-
+        print("Done initializing the tracking engine")
         #  "maxdepth_"+max_depth+"_df"+"Reward_"+ output_filename
         
                             # num_sims=4096
