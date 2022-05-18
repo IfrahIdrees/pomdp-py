@@ -176,8 +176,8 @@ if __name__ == '__main__':
     sensor_reliability = [0.99,0.95, 0.9, 0.8, 0.7, 0.6]
     # sensor_reliability = [0.7, 0.6]
     # sensor_reliability = [0.8]
-    sensor_reliability = [0.95, 0.9, 0.8, 0.7, 0.6]
-    sensor_reliability = [0.95]
+    # sensor_reliability = [0.95, 0.9, 0.8, 0.7, 0.6]
+    # sensor_reliability = [0.95]
     # sensor_reliability = [0.99,0.95]
     # sensor_reliability = [0.8, 0.7, 0.6]
     # sensor_reliability = [0.99, 0.9, 0.6]
@@ -185,11 +185,11 @@ if __name__ == '__main__':
     # sensor_reliability = [0.7 , 0.6]
     # sensor_reliability = [0.6]
     # sensor_reliability = [0.95, 0.99, 0.6]
-    # sensor_reliability = [0.99, 0.95]
-    # sensor_reliability = [0.99,0.6]
+    # sensor_reliability = [0.8]
+    # , 0.95]
     # sensor_reliability = [0.6]
     # sensor_reliability = [1]
-    sensor_reliability = [0.8]
+    # sensor_reliability = [0.8]
     # sensor_reliability = [0.5, 0.8]
     # sensor_reliability = [0.8]
 
@@ -197,7 +197,7 @@ if __name__ == '__main__':
     #6,10
     #nohup running 6,7
     
-    trials = 3
+    trials = 21
     config.seed = 5999
     config.trials = trials
     random.seed(config.seed)
@@ -221,7 +221,7 @@ if __name__ == '__main__':
     # for file_num in file_nums:
     #5 0.8
     print("i am going to start the main loop")
-    for file_num in range(1,8):
+    for file_num in range(1,4):
         if file_num == 4:
             continue
         # if file_num == 9:

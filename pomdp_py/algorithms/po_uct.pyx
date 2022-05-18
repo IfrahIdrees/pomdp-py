@@ -340,6 +340,9 @@ cdef class POUCT(Planner):
             print(f"Starting simulation number#{sims_count}")
             #global state_track_list 
             #state_track_list = []
+            #if self._hs.check_terminal_state(state.step_index+1):
+            #    action = [x for x in self._agent.valid_actions if x.name == "wait"][0]
+            #    return action, time_taken, sims_count
             self._simulate(state, self._agent.history, self._agent.tree,
                            None, None, 0)
             # print("simulation finished")
@@ -402,11 +405,13 @@ cdef class POUCT(Planner):
             self._expand_vnode(root, history, state=state)
             print("After expanding:", root)
             rollout_reward = self._rollout(state, history, root, depth)
+            print("$$$This is the received rollout reward:", rollout_reward)
             return rollout_reward
         cdef int nsteps
 
         #print("****THis is the tree so far:", self._agent.tree)
 
+        
         action = self._ucb(root)
         print("*****This is the selected action:", action)
         next_state, observation, reward, nsteps = sample_generative_model(self._agent, state, action)
@@ -419,6 +424,10 @@ cdef class POUCT(Planner):
         #if found_flag:
         #    print("This state has been encountered earlier")
         #state_track_list.append(state)
+        
+        #if self._hs.check_terminal_state(next_state.step_index):
+        #    return reward
+
         if nsteps == 0:
             # This indicates the provided action didn't lead to transition
             # Perhaps the action is not allowed to be performed for the given state
@@ -435,6 +444,7 @@ cdef class POUCT(Planner):
         root.num_visits += 1
         root[action].num_visits += 1
         root[action].value = root[action].value + (total_reward - root[action].value) / (root[action].num_visits)
+        print("$$$$$This is the received cumulative reward:", total_reward)
         return total_reward
 
     cpdef _rollout(self, State state, tuple history, VNode root, int depth):
@@ -448,7 +458,11 @@ cdef class POUCT(Planner):
         #print("***********starting rollout**********")
         with open("random_no.txt", 'a') as f:
             f.write("***********starting rollout**********"+'\n')
-        while depth < self._max_depth and not self._hs.check_terminal_state(state.step_index+1):
+        if self._hs.check_terminal_state(state.step_index):
+            return 0
+        first_loop = True
+        while depth < self._max_depth and (first_loop or not self._hs.check_terminal_state(next_state.step_index)):
+            first_loop = False
             action = self._rollout_policy.rollout(state, history)
             ## #print("here in rollout model")
             #print("hash of current state", hash(state))

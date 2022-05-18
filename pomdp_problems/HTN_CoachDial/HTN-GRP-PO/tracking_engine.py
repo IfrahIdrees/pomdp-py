@@ -339,7 +339,7 @@ class Tracking_Engine(object):
                 db._sensor.aggregate(pipeline)
 
                 print("going to plan")
-                total_reward, total_discounted_reward, step_index, gamma, num_question_asked = planner_one_loop(self.HTNCoachDial_problem, self.pouct, nsteps=1, debug_tree=False,  total_reward = total_reward, total_discounted_reward = total_discounted_reward, i=step_index, true_state = step, prob_lang =self._p_l, gamma = gamma, num_question_asked=num_question_asked)
+                total_reward, total_discounted_reward, step_index, gamma, num_question_asked = planner_one_loop(self.HTNCoachDial_problem, self.pouct, nsteps=1, debug_tree=True,  total_reward = total_reward, total_discounted_reward = total_discounted_reward, i=step_index, true_state = step, prob_lang =self._p_l, gamma = gamma, num_question_asked=num_question_asked)
                 index+=1
 
                 '''Not restore as set at start of simulation'''

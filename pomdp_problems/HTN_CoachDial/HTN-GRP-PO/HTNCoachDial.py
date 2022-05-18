@@ -169,11 +169,13 @@ class HTNCoachDialState(pomdp_py.OOState):
             else:
                 explaset_title_split = config.explaset_title.split("-")
                 hashint += hash("".join(objlangstate[explaset_title_split[1]]))
+        hashint += hash(self.step_index)
         return hashint
         # return super().__hash__()
 
     def __eq__(self, other: object) -> bool:
-        if isinstance(other, HTNCoachDialState) and not self.diff_state(other):
+        if isinstance(other, HTNCoachDialState) and not self.diff_state(other) and \
+            other.step_index == self.step_index:
             return True
         else:
             return False
@@ -452,6 +454,7 @@ class HTNCoachDialObservationModel(pomdp_py.ObservationModel):
         
     def sample(self, next_state, action):
         feedback_title = config.feedback_title
+        
         if action.name == "ask-clarification-question":
             question_title = config.question_title
             question_title_split = question_title.split("-")
@@ -466,7 +469,9 @@ class HTNCoachDialObservationModel(pomdp_py.ObservationModel):
             # sensor_state = next_state.get_object_state(explaset_title)
             lang_objattrs = {}
             # print("sensor_notification is", sequence_actions)
-            if question_index[0] == sequence_actions[-2]:
+            if question_index == None:
+                lang_objattrs[feedback_title] = None
+            elif question_index[0] == sequence_actions[-2]:
                 lang_objattrs[feedback_title] = "yes"
             else:
                 lang_objattrs[feedback_title] = "no"
@@ -636,6 +641,7 @@ class TransitionModel(pomdp_py.TransitionModel):
         #     print("A new state")
         #   self.all_hash.add(state_hash)
         if self.human_simulator.check_terminal_state(state.step_index+1): ##check if next step index is out of length 
+            state.step_index += 1
             return state
         if action.name == "ask-clarification-question":
             question_asked = action.update_question_asked(state)[0]
@@ -655,6 +661,7 @@ class TransitionModel(pomdp_py.TransitionModel):
         if execute:
             step_index, step, sensor_notifications = self.human_simulator.curr_step(state.step_index, action.name, real_step=True)
         else:
+            print("THis is the step index", state.step_index)
             step_index, step, sensor_notifications = self.human_simulator.curr_step(state.step_index, action.name)
         state.append_object_attribute(explaset_title, explaset_title_split[1], step)
         # print("state after append is", state)
@@ -799,8 +806,10 @@ class RewardModel(pomdp_py.RewardModel):
         # print(self.human_simulator.all_wrong_actions)
         # [for i in ]self.human_simulator._notifs[self.human_simulator.index_test_case]._notif.empty()
         # print()
-        if self.human_simulator.check_terminal_state(state.step_index+1) and action.name == "wait":
-            return self.goal_reward 
+        if self.human_simulator.check_terminal_state(state.step_index):
+            return 0
+        if self.human_simulator.check_terminal_state(next_state.step_index):
+            return self.goal_reward
         # elif self.human_simulator.check_terminal_state(state.step_index+1) and action.name == "ask-clarification-question":
             # return self.goal_reward 
         elif action.name == "wait":
@@ -881,6 +890,7 @@ class PreferredPolicyModel(PolicyModel):
         self.action_prior.set_all_actions(self.ACTIONS)
         self.num_visits_init = num_visits_init
         self.val_init = val_init
+        # self.human_simulator = hs
         
     def rollout(self, state, history):
         # Obtain preference and returns the action in it.
@@ -904,18 +914,20 @@ class PreferredPolicyModel(PolicyModel):
             # return random.sample(self.get_all_actions(state=state, history=history), 1)[0]
 
     def get_all_actions(self, **kwargs):
+        kwargs["state"]
         return self.ACTIONS
         # return super().get_all_actions(**kwargs)
 
 class ActionPrior(pomdp_py.ActionPrior):
     """greedy action prior for 'xy' motion scheme"""
-    def __init__(self, num_visits_init, val_init):
+    def __init__(self, num_visits_init, val_init, hs):
         # self.robot_id = robot_id
         # self.grid_map = grid_map
         self.all_actions = None
         self.num_visits_init = num_visits_init
         self.val_init = val_init
         # self.no_look = no_look
+        self.human_simulator = hs
 
     def set_all_actions(self, motion_actions):
         self.all_actions = motion_actions
@@ -980,7 +992,8 @@ class ActionPrior(pomdp_py.ActionPrior):
                              "we don't know what motion actions there are.")
 
         
-
+        
+            # return preferences
         ##check if terminal
         preferences = set()
         htn_explaset = copy.deepcopy(state.htn_explaset)
@@ -997,6 +1010,10 @@ class ActionPrior(pomdp_py.ActionPrior):
 
         # if sensor_notification == "turn_on_faucet_1":
             # print("here")
+
+        if self.human_simulator.check_terminal_state(state.step_index+1): ##check if next step index is out of length 
+            preferences.add((Action("wait"), self.num_visits_init, self.val_init))
+            return preferences
         
         if len(history) == 0:
             print("history is 0, here")
@@ -1027,7 +1044,7 @@ class ActionPrior(pomdp_py.ActionPrior):
             preferences.add((AgentAskClarificationQuestion(), self.num_visits_init, self.val_init))
             return preferences
 
-
+        return preferences
         
         # else:
             
@@ -1387,7 +1404,7 @@ class HTNCoachDial(pomdp_py.POMDP):
         reward_model = RewardModel(self.hs, args)
         num_visits=10
         val_init = reward_model.goal_reward
-        action_prior = ActionPrior(num_visits, val_init)
+        action_prior = ActionPrior(num_visits, val_init,self.hs)
 
         agent = pomdp_py.Agent(init_belief,
                                PreferredPolicyModel(action_prior, num_visits, val_init),
@@ -1448,6 +1465,10 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=True, d
         #     action = Action("wait")
         # else:
         # action = action_policy[i]
+        # if HTNCoachDial_problem.hs.check_terminal_state(HTNCoachDial_problem.agent.cur_belief.step_index+1) or HTNCoachDial_problem.agent.cur_belief.step_index==0: ##check if next step index is out of length 
+        #     # return stateif 
+        #     action = Action("wait")
+        # else:
         action = planner.plan(HTNCoachDial_problem.agent)
     elif HTNCoachDial_problem.agent_type == "htn_baseline":
         action = Action("wait")
@@ -1479,7 +1500,7 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=True, d
         dd = TreeDebugger(HTNCoachDial_problem.agent.tree)
         # import pdb; pdb.set_trace()
         TreeDebugger(HTNCoachDial_problem.agent.tree).pp
-
+    highest_action = None
     if action == AgentAskClarificationQuestion():
         ##update the question
         curr_belief = HTNCoachDial_problem.agent.cur_belief
@@ -1515,6 +1536,7 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=True, d
         f.write("True state: %s" % true_state + "\n")
         f.write("Belief: %s" % HTNCoachDial_problem.agent.cur_belief.__str__ + "\n")
         f.write("Action: %s" % str(action) + "\n")
+        f.write("Question Asked:", highest_action)
         f.write("Reward: %s" % str(env_reward)+ "\n")
 
     '''Print Statements'''
@@ -1549,6 +1571,8 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=True, d
                                                               action)
     # real_observation = TigerObservation(HTNCoachDial_problem.env.state.name)
     print(">> Observation: %s" % real_observation)
+    with open(HTNCoachDial_problem.reward_output_filename, 'a') as f:
+        f.write("Feedback Recieved: %s" % str(real_observation)+ "\n")
     HTNCoachDial_problem.agent.update_history(action, real_observation)
 
     # If the planner is POMCP, planner.update also updates agent belief.
