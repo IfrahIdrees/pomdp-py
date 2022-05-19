@@ -1214,7 +1214,7 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
     feedback = real_observation.get_lang_objattr(feedback_title)
     
     # return highest_action_PS[0]
-    question_asked_arg =  exp.highest_action_PS[0]
+    question_asked_arg =  exp.highest_action_PS
     if HTNCoachDial_problem.agent_type != "htn_baseline":
         if action.name == "ask-clarification-question" and feedback != None:
             if exp._other_happen> config._other_happen and not config._last_sensor_notification_dict:
@@ -1457,7 +1457,7 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=True, d
     #     12:
     #     13:
     # }
-    # action_policy = [AgentAskClarificationQuestion(),Action("wait"),AgentAskClarificationQuestion(),AgentAskClarificationQuestion(),Action("wait")]
+    # action_policy = [Action("wait"),AgentAskClarificationQuestion(),AgentAskClarificationQuestion(),AgentAskClarificationQuestion(),AgentAskClarificationQuestion()]
     print("==== Step %d ====" % (i+1))
 
     if HTNCoachDial_problem.agent_type == "standard":
@@ -1469,6 +1469,7 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=True, d
         #     # return stateif 
         #     action = Action("wait")
         # else:
+        # action = action_policy[i]
         action = planner.plan(HTNCoachDial_problem.agent)
     elif HTNCoachDial_problem.agent_type == "htn_baseline":
         action = Action("wait")

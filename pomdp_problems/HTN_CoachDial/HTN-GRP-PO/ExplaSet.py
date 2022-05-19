@@ -534,7 +534,7 @@ class explaSet(object):
         # for expla in self._explaset:
         #     expla
         weights = [0 for i in range(len(self._explaset))]
-        for expla in self._explaset:
+        for ind, expla in enumerate(self._explaset):
             # goal_prob = expla._prob
             correct_taskNets = 0
             
