@@ -81,7 +81,7 @@ class TaskHint(object):
         goal_recog_prob = str(wash_hand) + "\t" + str(make_tea) + "\t" + str(make_coffee) + "\t" + str(step_level_hint) + "\t"
         if file_name == "":
             print(goal_recog_prob)
-            return 
+            return goal_recog_prob
         with open(file_name, 'a') as f:
             f.write(goal_recog_prob)
         return goal_recog_prob

@@ -1217,6 +1217,9 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
     question_asked_arg =  exp.highest_action_PS
     if HTNCoachDial_problem.agent_type != "htn_baseline":
         if action.name == "ask-clarification-question" and feedback != None:
+            # exp.update_with_language_feedback(feedback, exp.highest_action_PS, self._p_l)
+            exp.update_with_language_feedback(feedback, question_asked_arg, prob_lang)
+            
             if exp._other_happen> config._other_happen and not config._last_sensor_notification_dict:
                 #update the sensor value
                 print("sensor notif is,", config._last_sensor_notification)
@@ -1254,8 +1257,7 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
                     # exp.update_without_language_feedback(prob_lang)
         
             # else:
-            # exp.update_with_language_feedback(feedback, exp.highest_action_PS, self._p_l)
-            exp.update_with_language_feedback(feedback, question_asked_arg, prob_lang)
+            
     exp.pendingset_generate()
     # compute goal recognition result PROB and planning result PS
     taskhint = exp.task_prob_calculate(HTNCoachDial_problem.hs.real_output_filename)

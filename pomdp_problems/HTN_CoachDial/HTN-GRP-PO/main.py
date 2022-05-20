@@ -158,10 +158,28 @@ if __name__ == '__main__':
     cond_satisfy = 0.999
     cond_notsatisfy = 0.001
     
-    #threshhold that an explanation is no longer maintain
+    # ######## before Friday ##################
+    # #threshhold that an explanation is no longer maintain
+    # delete_trigger = 0.001
+    # # config.mcts_delete_trigger = 0.001
+    # config._real_delete_trigger = 0.001 #0.000095 #(0.000095 works with time)
+    
+    # ##if there is a notification, the probability that nothing happend
+    # nothing_happen = 0.01
+    
+    # ##the otherHappen triggering threshhold
+    # #orignal other_happen = 0.75
+    # # other_happen = 0.30
+    # other_happen = 0.87 #0.85 #0.87
+    # # other_happen = 0.85
+    
+    # ##sensor set up files
+
+    # #################################################
+
     delete_trigger = 0.001
     # config.mcts_delete_trigger = 0.001
-    config._real_delete_trigger = 0.001 #0.000095 #(0.000095 works with time)
+    config._real_delete_trigger = 0.00001 #0.000095 #(0.000095 works with time)
     
     ##if there is a notification, the probability that nothing happend
     nothing_happen = 0.01
@@ -169,19 +187,16 @@ if __name__ == '__main__':
     ##the otherHappen triggering threshhold
     #orignal other_happen = 0.75
     # other_happen = 0.30
-    other_happen = 0.87 #0.85 #0.87
-    # other_happen = 0.85
-    
-    ##sensor set up files
+    other_happen = 0.86 #0.87 #(use 0.87 for all the cases between except 7 and 9, for 7 and 9 use 0.86) #0.85 #0.87
 
     sensor_reliability = [0.99,0.95, 0.9, 0.8, 0.7, 0.6]
     # sensor_reliability = [0.7, 0.6]
     # sensor_reliability = [0.8]
-    # sensor_reliability = [0.95, 0.9, 0.8, 0.7, 0.6]
+    # sensor_reliability = [0.9, 0.8, 0.7, 0.6]
     # sensor_reliability = [0.95]
     # sensor_reliability = [0.99,0.95]
     # sensor_reliability = [0.8, 0.7, 0.6]
-    sensor_reliability = [0.99, 0.8, 0.6]
+    # sensor_reliability = [0.99, 0.8, 0.6]
     # sensor_reliability = [0.9]
     # sensor_reliability = [0.7 , 0.6]
     # sensor_reliability = [0.6]
@@ -221,7 +236,7 @@ if __name__ == '__main__':
     # file_nums =[3,5,6,10,12,8]
     # repeating trial number 3 0.8 has the weird issue
     file_nums =[1,2,7,9,11]
-    file_nums =[1]
+    # file_nums =[1]
     # file_nums =[1,2,7,9,11]
     print("i am going to start the main loop")
 
@@ -232,9 +247,9 @@ if __name__ == '__main__':
             # spamwriter.writerow(['Spam'] * 5 + ['Baked Beans'])
             spamwriter.writerow(["max_depth","num_sims","d","e","file_num", "reliability","trial_num", "config.randomIndex","config.realRandomIndex"])          
 
-    for file_num in file_nums:
+    # for file_num in file_nums:
     #5 0.
-    # for file_num in range(1,4):
+    for file_num in range(1,13):
         if file_num == 4:
             continue
         # if file_num == 9:

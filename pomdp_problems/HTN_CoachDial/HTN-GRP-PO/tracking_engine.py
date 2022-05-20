@@ -150,7 +150,7 @@ class Tracking_Engine(object):
         self.pouct = pomdp_py.POUCT(max_depth=max_depth, discount_factor=discount_factor,
                             num_sims=num_sims, exploration_const=exploration_const,
                             rollout_policy=self.HTNCoachDial_problem.agent.policy_model,
-                            show_progress=True)
+                            show_progress=True) #, planning_time = 50)
         self.pouct._db = db
         self.pouct._hs = self.HTNCoachDial_problem.hs
         self.pouct._mcts_output_filename = config._mcts_output_filename 
