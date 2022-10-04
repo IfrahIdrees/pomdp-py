@@ -27,6 +27,8 @@ from pomdp_py.utils import TreeDebugger
 from HTNCoachDial import *
 import config
 from human_simulator import *
+from pathlib import Path
+import os
 
 class Tracking_Engine(object):
     def __init__(self, no_trigger = 0, sleep_interval = 1, cond_satisfy=1.0, cond_notsatisfy = 0.0, delete_trigger = 0.001, non_happen = 0.00001, otherHappen = 0.75, file_name = "Case1", output_file_name = "Case1.txt", mcts_output_filename="mcts_case1.txt", args = None, db_client = None):
@@ -160,8 +162,9 @@ class Tracking_Engine(object):
         #     discount_factor, 
         #     exploration_const
         # )
-        self.HTNCoachDial_problem.reward_output_filename = args.log_dir+"/reward/Reward_"+output_file_name
-        
+        self.HTNCoachDial_problem.reward_output_filename = Path(args.log_dir+"/reward/Reward_"+output_file_name)
+        self.HTNCoachDial_problem.reward_csv_filename  = self.HTNCoachDial_problem.reward_output_filename.with_suffix('.csv')
+
         print("Current Parameters are:", config._output_file_name)
 
         with open(config._output_file_name, 'a') as f:
@@ -172,6 +175,14 @@ class Tracking_Engine(object):
 
         with open(self.HTNCoachDial_problem.reward_output_filename , 'a') as f:
             f.write('\n========================\n')
+
+        if not os.path.exists(self.HTNCoachDial_problem.reward_csv_filename):
+            with open(self.HTNCoachDial_problem.reward_csv_filename, 'a', newline='') as csvfile:
+                spamwriter = csv.writer(csvfile, delimiter=',',
+                                        quotechar='|', quoting=csv.QUOTE_MINIMAL)
+                # spamwriter.writerow(['Spam'] * 5 + ['Baked Beans'])
+                spamwriter.writerow(["Timestep","Total Reward","Total Cumulative Reward","Time Taken"])          
+
         print("Done initializing the tracking engine")
         #  "maxdepth_"+max_depth+"_df"+"Reward_"+ output_filename
         
@@ -203,7 +214,7 @@ class Tracking_Engine(object):
         print()
         print("the engine has been started...")
         print()
-        
+        total_time = 0
         notif = notification(self._file_name)   ##check the current notification
         test_case_length =  notif._notif.qsize()
         # exp = explaSet(cond_satisfy = self._cond_satisfy, cond_notsatisfy = self._cond_notsatisfy, delete_trigger = self._delete_trigger, non_happen = self._non_happen, output_file_name = self._output_file_name)
@@ -339,7 +350,18 @@ class Tracking_Engine(object):
                 db._sensor.aggregate(pipeline)
 
                 print("going to plan")
+                start_time = time.time()
                 total_reward, total_discounted_reward, step_index, gamma, num_question_asked = planner_one_loop(self.HTNCoachDial_problem, self.pouct, nsteps=1, debug_tree=True,  total_reward = total_reward, total_discounted_reward = total_discounted_reward, i=step_index, true_state = step, prob_lang =self._p_l, gamma = gamma, num_question_asked=num_question_asked)
+                time_per_step = time.time() - start_time
+                
+                with open(self.HTNCoachDial_problem.reward_csv_filename, 'a', newline='') as csvfile:
+                    spamwriter = csv.writer(csvfile, delimiter=',',
+                                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
+                    # spamwriter.writerow(['Spam'] * 5 + ['Baked Beans'])
+                    spamwriter.writerow([step_index-1, total_reward, total_discounted_reward, time_per_step])
+
+                
+                total_time+=time_per_step
                 index+=1
 
                 '''Not restore as set at start of simulation'''
@@ -360,7 +382,7 @@ class Tracking_Engine(object):
                 print()
                 print()
         
-        return total_reward, total_discounted_reward, num_question_asked, test_case_length
+        return total_reward, total_discounted_reward, num_question_asked, test_case_length, total_time
 
         # HTN
         # with open(self.HTNCoachDial_problem.reward_output_filename, 'a') as f:

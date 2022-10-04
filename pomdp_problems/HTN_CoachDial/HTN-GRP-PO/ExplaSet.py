@@ -223,7 +223,11 @@ class explaSet(object):
     def action_posterior(self, execute=False):
         self._action_posterior_prob = {}
         otherHappen = 1
-        for expla in self._explaset:           
+        # print(f"------Sensor Notifiation {self._sensor_notification}------")
+        # print("Action_posterior", self._action_posterior_prob)
+        for expla in self._explaset:
+            # print("expla pending set: ", expla._pendingSet) 
+
             for action in expla._pendingSet:
                 if action[0] in self._action_posterior_prob:
                     self._action_posterior_prob[action[0]] = self._action_posterior_prob[action[0]] + action[1]

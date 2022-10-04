@@ -125,7 +125,8 @@ if config.baseline:
     db_client = db
 else:
     client = MongoClient()
-    db = client.smart_home5
+    # db = client.smart_home5 ##used for 10,11
+    db = client.smart_homeISRRreview
     db_client = db
 
 
@@ -236,7 +237,10 @@ if __name__ == '__main__':
     # file_nums =[3,5,6,10,12,8]
     # repeating trial number 3 0.8 has the weird issue
     file_nums =[1,2,7,9,11]
+    # file_nums =[1,2,3,5,6,8,12]
+    file_nums =[6,8,12]
     # file_nums =[1]
+    #5 0.9 0.8
     # file_nums =[1,2,7,9,11]
     print("i am going to start the main loop")
 
@@ -247,9 +251,10 @@ if __name__ == '__main__':
             # spamwriter.writerow(['Spam'] * 5 + ['Baked Beans'])
             spamwriter.writerow(["max_depth","num_sims","d","e","file_num", "reliability","trial_num", "config.randomIndex","config.realRandomIndex"])          
 
-    # for file_num in file_nums:
+    
+    for file_num in file_nums:
     #5 0.
-    for file_num in range(1,13):
+    # for file_num in range(1,13):
         if file_num == 4:
             continue
         # if file_num == 9:
@@ -278,7 +283,7 @@ if __name__ == '__main__':
             if os.path.exists(cum_rew_file_name):
                 cumulative_reward_df = pd.read_csv(cum_rew_file_name)
             else:
-                cumulative_reward_df = pd.DataFrame(columns = ['Num_Sims',"cumu_reward", "cumu_discounted_reward", "num_question_asked", "normalized_num_question_asked"])
+                cumulative_reward_df = pd.DataFrame(columns = ['Num_Sims',"cumu_reward", "cumu_discounted_reward", "num_question_asked", "normalized_num_question_asked", "normalized_time_taken"])
             
             if not exists(input_file_name):
                 continue
@@ -337,10 +342,10 @@ if __name__ == '__main__':
                     # db.backup_state.insertOne({});
                 else:
                     ##Some times those command do not work, add "--jsonArray" to the end of each command line
-                    os.system("mongoimport --db smart_home5 --collection method --drop --file ../../../../KnowledgeBase/method.json")
-                    os.system("mongoimport --db smart_home5 --collection state --drop --file ../../../../KnowledgeBase/state.json")
-                    os.system("mongoimport --db smart_home5 --collection operator --drop --file ../../../../KnowledgeBase/operator.json")
-                    os.system("mongoimport --db smart_home5 --collection Rstate --drop --file ../../../../KnowledgeBase/realState.json")
+                    os.system("mongoimport --db smart_homeISRRreview --collection method --drop --file ../../../../KnowledgeBase/method.json")
+                    os.system("mongoimport --db smart_homeISRRreview --collection state --drop --file ../../../../KnowledgeBase/state.json")
+                    os.system("mongoimport --db smart_homeISRRreview --collection operator --drop --file ../../../../KnowledgeBase/operator.json")
+                    os.system("mongoimport --db smart_homeISRRreview --collection Rstate --drop --file ../../../../KnowledgeBase/realState.json")
                     # db.backup_state.insertOne({});
                     
                 # ##Some times those command do not work, add "--jsonArray" to the end of each command line
@@ -360,10 +365,10 @@ if __name__ == '__main__':
                 
                 else:
                     if x == None:
-                        sensor_command = "mongoimport --db smart_home5 --collection sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
+                        sensor_command = "mongoimport --db smart_homeISRRreview --collection sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
                         # mcts_sensor_command = "mongoimport --db smart_home3 --collection mcts_sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
                     else:   
-                        sensor_command = "mongoimport --db smart_home5 --collection sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor" + "_" + str(x) + ".json"
+                        sensor_command = "mongoimport --db smart_homeISRRreview --collection sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor" + "_" + str(x) + ".json"
                         # mcts_sensor_command = "mongoimport --db smart_home3 --collection mcts_sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
 
                 # if x == None:
@@ -388,9 +393,11 @@ if __name__ == '__main__':
                 # args = parser.parse_args()
                 
                 tracking_engine = Tracking_Engine(no_trigger = no_notif_trigger_prob, sleep_interval = interval, cond_satisfy=cond_satisfy, cond_notsatisfy = cond_notsatisfy, delete_trigger = delete_trigger, otherHappen = other_happen, file_name = input_file_name, output_file_name = output_file_name, mcts_output_filename = mcts_output_filename, args=args, db_client = db_client)
-                total_reward_per_iter, total_discounted_reward_per_iter, num_question_asked_per_iter, test_case_length = tracking_engine.start()
+                total_reward_per_iter, total_discounted_reward_per_iter, num_question_asked_per_iter, test_case_length,total_time_per_iter = tracking_engine.start()
                 normalized_question_asked = num_question_asked_per_iter/test_case_length
-                cumulative_reward_df.loc[len(cumulative_reward_df.index)] = ([args.num_sims, total_reward_per_iter, total_discounted_reward_per_iter,num_question_asked_per_iter,normalized_question_asked])
+                normalized_time = total_time_per_iter/test_case_length
+                
+                cumulative_reward_df.loc[len(cumulative_reward_df.index)] = ([args.num_sims, total_reward_per_iter, total_discounted_reward_per_iter,num_question_asked_per_iter,normalized_question_asked, normalized_time])
 
                 total_reward += total_reward_per_iter
                 total_discounted_reward += total_discounted_reward_per_iter

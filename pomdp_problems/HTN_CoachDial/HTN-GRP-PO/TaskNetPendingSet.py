@@ -36,8 +36,8 @@ class TaskNetPendingSet(object):
         theTree = self._tree
         action_node = theTree.get_node(action)
         action_node.data._completeness = True
-        print(theTree.get_node(theTree.root).tag)
-        print(self._branch_factor)
+        '''print(theTree.get_node(theTree.root).tag)'''
+        '''print(self._branch_factor)'''
         newTaskNet = TaskNet(goalName = theTree.get_node(theTree.root).tag, tree = theTree, expandProb = self._branch_factor)
         newTaskNet.update()
         return newTaskNet

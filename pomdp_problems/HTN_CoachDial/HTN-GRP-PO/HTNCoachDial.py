@@ -57,6 +57,8 @@ import logging
 import pandas as pd
 import os
 import argparse
+import csv
+
 # import copy
 # from ExplaSet import *
 # class TigerState(pomdp_py.State):
@@ -661,7 +663,7 @@ class TransitionModel(pomdp_py.TransitionModel):
         if execute:
             step_index, step, sensor_notifications = self.human_simulator.curr_step(state.step_index, action.name, real_step=True)
         else:
-            print("THis is the step index", state.step_index)
+            '''print("THis is the step index", state.step_index)'''
             step_index, step, sensor_notifications = self.human_simulator.curr_step(state.step_index, action.name)
         state.append_object_attribute(explaset_title, explaset_title_split[1], step)
         # print("state after append is", state)
@@ -897,7 +899,7 @@ class PreferredPolicyModel(PolicyModel):
         preferences = self.action_prior.get_preferred_actions(state, history)
         if len(preferences) > 0:
             if len(preferences) > 1:
-                print("here")
+                '''print("here")'''
             return random.sample(preferences, 1)[0][0]
         else:
             ##wait is threex more likely since three times check if action_ask will be added or not.
@@ -1222,7 +1224,7 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
             
             if exp._other_happen> config._other_happen and not config._last_sensor_notification_dict:
                 #update the sensor value
-                print("sensor notif is,", config._last_sensor_notification)
+                '''print("sensor notif is,", config._last_sensor_notification)'''
                 config._last_sensor_notification_dict = languageStateANDSensorUpdate(config._last_sensor_notification, config._output_file_name)
                 exp.setSensorNotification(config._last_sensor_notification_dict)
 
@@ -1234,7 +1236,7 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
                 # wrong step detect
                 if otherHappen > config._other_happen:
                     # wrong step handling
-                    print("action posterior after bayseian inference is",  exp._action_posterior_prob)
+                    '''print("action posterior after bayseian inference is",  exp._action_posterior_prob)'''
                     exp.handle_exception()
                     
                 # correct step procedure
@@ -1261,7 +1263,7 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
     exp.pendingset_generate()
     # compute goal recognition result PROB and planning result PS
     taskhint = exp.task_prob_calculate(HTNCoachDial_problem.hs.real_output_filename)
-    print("taskhint is", taskhint.__dict__)
+    '''print("taskhint is", taskhint.__dict__)'''
     #output PROB and PS in a file
     exp.print_explaSet()
             
@@ -1282,7 +1284,7 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
     s1_step_index = curr_belief.step_index 
     s2_step_index = s1_step_index+1
     s1_step_name  = HTNCoachDial_problem.env.human_simulator.return_step(s1_step_index) 
-    print("s1 is", s1_step_index, s1_step_name)
+    '''print("s1 is", s1_step_index, s1_step_name)'''
     s2_step_name = None
     sensor_notification = None
     if not HTNCoachDial_problem.env.human_simulator.check_terminal_state(s2_step_index):
@@ -1366,7 +1368,7 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
     #     attribute =  key.split("-")[1]
     #     curr_belief.append_object_belief(key, attribute, next_sensor_notification)
 
-    print("s1_step_name ",s1_step_name , "s2_step_name ", s2_step_name  )
+    '''print("s1_step_name ",s1_step_name , "s2_step_name ", s2_step_name  )'''
     if s2_step_name != None:
         
         # if s1_step_name == exp.highest_action_PS[0]:
@@ -1400,6 +1402,8 @@ class HTNCoachDial(pomdp_py.POMDP):
         self.agent_type = args.agent_type
         self.hs = hs
         self.reward_output_filename = None
+        self.reward_csv_filename = None
+
         # self.hs.read_files()
         # self.hs.goal_selection()
 
@@ -1542,6 +1546,7 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=True, d
         f.write("Question Asked: %s" % str(highest_action) + "\n")
         f.write("Reward: %s" % str(env_reward)+ "\n")
 
+    
     '''Print Statements'''
     # print("True state: %s" % true_state)
     # # print("True state: %s" % HTNCoachDial_problem.env.state)
@@ -1555,7 +1560,8 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=True, d
     real_observation = HTNCoachDial_problem.env.provide_observation(HTNCoachDial_problem.agent.observation_model,
                                                               action)
     # real_observation = TigerObservation(HTNCoachDial_problem.env.state.name)
-    print(">> Observation: %s" % real_observation)
+    
+    '''print(">> Observation: %s" % real_observation)'''
     with open(HTNCoachDial_problem.reward_output_filename, 'a') as f:
         f.write("Feedback Recieved: %s" % str(real_observation)+ "\n")
 

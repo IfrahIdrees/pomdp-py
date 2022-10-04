@@ -155,3 +155,12 @@ pomdp_problems/HTN_CoachDial/HTN-GRP-PO/D*
 pomdp_problems/HTN_CoachDial/ssh_folders/*
 pomdp_problems/HTN_CoachDial/old_experiments/*
 pomdp_py/algorithms/po_uct.pyx
+
+
+pomdp_problems/HTN_CoachDial/ICAPS2023/
+pomdp_problems/HTN_CoachDial/ISRR_05_20_22/
+pomdp_problems/HTN_CoachDial/history.txt
+pomdp_problems/HTN_CoachDial/logs_harddisk+ubuntu20.04rerun_09_29_22/*
+pomdp_problems/HTN_CoachDial/outputs_harddisk+ubuntu20.04rerun_09_29_22/*
+
+# pomdp_problems/HTN_CoachDial/logs_harddisk+ubuntu20.04rerun_09_29_22/*
