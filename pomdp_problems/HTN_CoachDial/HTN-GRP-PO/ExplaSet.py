@@ -48,6 +48,7 @@ class explaSet(object):
         self._mcts_output_filename = mcts_output_filename
         self.mcts_step_index = -1
         self.goal_recog_prob = None
+        self.pending_set = {}
     
     ##################################################################################################    
     ####                                        Part I                                           #####
@@ -222,6 +223,7 @@ class explaSet(object):
     ##################################################################################################
     def action_posterior(self, execute=False):
         self._action_posterior_prob = {}
+        self.pending_set = {}
         otherHappen = 1
         # print(f"------Sensor Notifiation {self._sensor_notification}------")
         # print("Action_posterior", self._action_posterior_prob)
@@ -234,6 +236,14 @@ class explaSet(object):
                     
                 else:
                     self._action_posterior_prob[action[0]] = action[1]
+        
+
+                if action[0] in self.pending_set:
+                    self.pending_set[action[0]] = self.pending_set[action[0]] + action[1]
+                    
+                else:
+                    self.pending_set[action[0]] = action[1]
+         
         #---------------------------------
             for start_task in expla._start_task:
                 if expla._start_task[start_task] == 0:

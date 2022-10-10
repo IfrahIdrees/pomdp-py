@@ -29,7 +29,7 @@ if config.baseline:
     db = client.smart_homebaseline
 else:
     client = MongoClient()
-    db = client.smart_homeISRRreview
+    db = client.smart_hometest
 class DB_Object(object):
     def __init__(self):
         self._method = db.method

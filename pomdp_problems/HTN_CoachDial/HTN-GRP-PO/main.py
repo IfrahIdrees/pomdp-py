@@ -16,7 +16,7 @@ def parseArguments():
     #parser.add_argument("is_heuristic_agent", action="store_true")
     # parser.add_argument("--belief", type=str, default="uniform")
     parser.add_argument("--agent_type", type=str, default="standard",
-                        help="standard, random, heuristic")
+                        help="standard, random, htn_baseline greedy")
     parser.add_argument("--maxsteps", type=int, default=10, help="number of max steps")
     parser.add_argument("--num_sims", type=int, default=10,
                         help="num_sims for POMCP")
@@ -126,7 +126,7 @@ if config.baseline:
 else:
     client = MongoClient()
     # db = client.smart_home5 ##used for 10,11
-    db = client.smart_homeISRRreview
+    db = client.smart_hometest
     db_client = db
 
 
@@ -184,7 +184,7 @@ if __name__ == '__main__':
     
     ##if there is a notification, the probability that nothing happend
     nothing_happen = 0.01
-    
+    # random
     ##the otherHappen triggering threshhold
     #orignal other_happen = 0.75
     # other_happen = 0.30
@@ -193,7 +193,7 @@ if __name__ == '__main__':
     sensor_reliability = [0.99,0.95, 0.9, 0.8, 0.7, 0.6]
     # sensor_reliability = [0.7, 0.6]
     # sensor_reliability = [0.8]
-    # sensor_reliability = [0.9, 0.8, 0.7, 0.6]
+    sensor_reliability = [0.7]
     # sensor_reliability = [0.95]
     # sensor_reliability = [0.99,0.95]
     # sensor_reliability = [0.8, 0.7, 0.6]
@@ -238,9 +238,10 @@ if __name__ == '__main__':
     # repeating trial number 3 0.8 has the weird issue
     file_nums =[1,2,7,9,11]
     # file_nums =[1,2,3,5,6,8,12]
-    file_nums =[6,8,12]
-    # file_nums =[1]
+    file_nums =[5, 6]
+    file_nums =[1]
     #5 0.9 0.8
+    #6 0.9-
     # file_nums =[1,2,7,9,11]
     print("i am going to start the main loop")
 
@@ -255,12 +256,13 @@ if __name__ == '__main__':
     for file_num in file_nums:
     #5 0.
     # for file_num in range(1,13):
+    # for file_num in range(5,9):
         if file_num == 4:
             continue
-        # if file_num == 9:
-        #     sensor_reliability = [0.99]
-        # if file_num == 1:
-        #     sensor_reliability = [0.99, 0.8, 0.6]
+        if file_num == 5:
+            sensor_reliability = [0.9, 0.8]
+        if file_num == 6:
+            sensor_reliability = [0.9, 0.8, 0.7, 0.6]
         # if file_num == 2:
         #     sensor_reliability = [0.99, 0.8, 0.6]
         for x in sensor_reliability:
@@ -342,10 +344,10 @@ if __name__ == '__main__':
                     # db.backup_state.insertOne({});
                 else:
                     ##Some times those command do not work, add "--jsonArray" to the end of each command line
-                    os.system("mongoimport --db smart_homeISRRreview --collection method --drop --file ../../../../KnowledgeBase/method.json")
-                    os.system("mongoimport --db smart_homeISRRreview --collection state --drop --file ../../../../KnowledgeBase/state.json")
-                    os.system("mongoimport --db smart_homeISRRreview --collection operator --drop --file ../../../../KnowledgeBase/operator.json")
-                    os.system("mongoimport --db smart_homeISRRreview --collection Rstate --drop --file ../../../../KnowledgeBase/realState.json")
+                    os.system("mongoimport --db smart_hometest --collection method --drop --file ../../../../KnowledgeBase/method.json")
+                    os.system("mongoimport --db smart_hometest --collection state --drop --file ../../../../KnowledgeBase/state.json")
+                    os.system("mongoimport --db smart_hometest --collection operator --drop --file ../../../../KnowledgeBase/operator.json")
+                    os.system("mongoimport --db smart_hometest --collection Rstate --drop --file ../../../../KnowledgeBase/realState.json")
                     # db.backup_state.insertOne({});
                     
                 # ##Some times those command do not work, add "--jsonArray" to the end of each command line
@@ -365,10 +367,10 @@ if __name__ == '__main__':
                 
                 else:
                     if x == None:
-                        sensor_command = "mongoimport --db smart_homeISRRreview --collection sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
+                        sensor_command = "mongoimport --db smart_hometest --collection sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
                         # mcts_sensor_command = "mongoimport --db smart_home3 --collection mcts_sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
                     else:   
-                        sensor_command = "mongoimport --db smart_homeISRRreview --collection sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor" + "_" + str(x) + ".json"
+                        sensor_command = "mongoimport --db smart_hometest --collection sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor" + "_" + str(x) + ".json"
                         # mcts_sensor_command = "mongoimport --db smart_home3 --collection mcts_sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
 
                 # if x == None:
