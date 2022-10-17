@@ -16,7 +16,7 @@ def parseArguments():
     #parser.add_argument("is_heuristic_agent", action="store_true")
     # parser.add_argument("--belief", type=str, default="uniform")
     parser.add_argument("--agent_type", type=str, default="standard",
-                        help="standard, random, heuristic")
+                        help="standard, random, htn_baseline greedy")
     parser.add_argument("--maxsteps", type=int, default=10, help="number of max steps")
     parser.add_argument("--num_sims", type=int, default=10,
                         help="num_sims for POMCP")
@@ -278,7 +278,7 @@ if __name__ == '__main__':
             if os.path.exists(cum_rew_file_name):
                 cumulative_reward_df = pd.read_csv(cum_rew_file_name)
             else:
-                cumulative_reward_df = pd.DataFrame(columns = ['Num_Sims',"cumu_reward", "cumu_discounted_reward", "num_question_asked", "normalized_num_question_asked"])
+                cumulative_reward_df = pd.DataFrame(columns = ['Num_Sims',"cumu_reward", "cumu_discounted_reward", "num_question_asked", "normalized_num_question_asked", "normalized_time_taken"])
             
             if not exists(input_file_name):
                 continue
@@ -388,9 +388,11 @@ if __name__ == '__main__':
                 # args = parser.parse_args()
                 
                 tracking_engine = Tracking_Engine(no_trigger = no_notif_trigger_prob, sleep_interval = interval, cond_satisfy=cond_satisfy, cond_notsatisfy = cond_notsatisfy, delete_trigger = delete_trigger, otherHappen = other_happen, file_name = input_file_name, output_file_name = output_file_name, mcts_output_filename = mcts_output_filename, args=args, db_client = db_client)
-                total_reward_per_iter, total_discounted_reward_per_iter, num_question_asked_per_iter, test_case_length = tracking_engine.start()
+                total_reward_per_iter, total_discounted_reward_per_iter, num_question_asked_per_iter, test_case_length,total_time_per_iter = tracking_engine.start()
                 normalized_question_asked = num_question_asked_per_iter/test_case_length
-                cumulative_reward_df.loc[len(cumulative_reward_df.index)] = ([args.num_sims, total_reward_per_iter, total_discounted_reward_per_iter,num_question_asked_per_iter,normalized_question_asked])
+                normalized_time = total_time_per_iter/test_case_length
+                
+                cumulative_reward_df.loc[len(cumulative_reward_df.index)] = ([args.num_sims, total_reward_per_iter, total_discounted_reward_per_iter,num_question_asked_per_iter,normalized_question_asked, normalized_time])
 
                 total_reward += total_reward_per_iter
                 total_discounted_reward += total_discounted_reward_per_iter

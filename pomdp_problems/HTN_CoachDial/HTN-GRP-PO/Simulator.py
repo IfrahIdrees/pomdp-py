@@ -64,7 +64,7 @@ def languageStateANDSensorUpdate(step_name, output_file_name):
     #     f.write(step_name + "\t")
         
     sensor_notification = []
-    print(step_name)
+    '''print(step_name)'''
     op = db.get_operator(step_name)
     effect = op["effect"]
     for obj in effect:

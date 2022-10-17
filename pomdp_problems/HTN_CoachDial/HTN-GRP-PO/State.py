@@ -52,11 +52,11 @@ class State(object):
         result = self.get_attr_in_effect(exp)
         action_list = result[0]
         title = result[1]
-        print("Belief Update is")
+        '''print("Belief Update is")'''
         for i, x in enumerate(title):
             att = db.get_object_attri(x[0], x[1])
             att = self.update_attri_status_belief(att, i, action_list, title)
-            print(title[i][0], title[i][1], att)
+            '''print(title[i][0], title[i][1], att)'''
             db.update_state_belief(title[i][0], title[i][1], att)
     def cal_plang_att_action(self,att,i, exp, action_list, title):
         sum_ = 0

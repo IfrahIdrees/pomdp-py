@@ -104,7 +104,7 @@ class DB_Object(object):
          
     # Find and return the attribute value belief from belief state
     def get_attribute_prob(self, s, ob_name, attri_name):
-        print("inside database get attribute prob", ob_name, attri_name)
+        '''print("inside database get attribute prob", ob_name, attri_name)'''
         st = list(self._state.find({"ob_name":ob_name}))
         return float(st[0][attri_name][s])
     

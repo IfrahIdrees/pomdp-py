@@ -57,6 +57,7 @@ import logging
 import pandas as pd
 import os
 import argparse
+import csv
 # import copy
 # from ExplaSet import *
 # class TigerState(pomdp_py.State):
@@ -276,17 +277,20 @@ class AgentAskClarificationQuestion(Action):
         super().__init__("ask-clarification-question")
         self.question_asked = None
 
-    def update_question_asked(self, state):
+    def update_question_asked(self, state, question_asked_pair = None):
         # print("state in action is", state)
         # explaset_title = "explaset_action"
         # explaset_title = explaset_title.split("_")
         # question_asked_state = state.get_object_state(title)
         # question_asked_state.attributes[title_split[1]] = question_asked
-        
+        if question_asked_pair !=None:
+            self.question_asked = question_asked_pair[0]
+            return question_asked_pair
+
         highest_action_PS = ["", float('-inf')]
         if state.htn_explaset == None:
             return None
-        for k, v in state.htn_explaset._action_posterior_prob.items():
+        for k, v in state.htn_explaset.pending_set.items():
             if v > highest_action_PS[1]:
                 highest_action_PS = [k,v]
         #TODO: actual epxlaset not updated
@@ -661,7 +665,7 @@ class TransitionModel(pomdp_py.TransitionModel):
         if execute:
             step_index, step, sensor_notifications = self.human_simulator.curr_step(state.step_index, action.name, real_step=True)
         else:
-            print("THis is the step index", state.step_index)
+            '''print("THis is the step index", state.step_index)'''
             step_index, step, sensor_notifications = self.human_simulator.curr_step(state.step_index, action.name)
         state.append_object_attribute(explaset_title, explaset_title_split[1], step)
         # print("state after append is", state)
@@ -897,7 +901,7 @@ class PreferredPolicyModel(PolicyModel):
         preferences = self.action_prior.get_preferred_actions(state, history)
         if len(preferences) > 0:
             if len(preferences) > 1:
-                print("here")
+                '''print("here")'''
             return random.sample(preferences, 1)[0][0]
         else:
             ##wait is threex more likely since three times check if action_ask will be added or not.
@@ -914,7 +918,6 @@ class PreferredPolicyModel(PolicyModel):
             # return random.sample(self.get_all_actions(state=state, history=history), 1)[0]
 
     def get_all_actions(self, **kwargs):
-        kwargs["state"]
         return self.ACTIONS
         # return super().get_all_actions(**kwargs)
 
@@ -1222,7 +1225,7 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
             
             if exp._other_happen> config._other_happen and not config._last_sensor_notification_dict:
                 #update the sensor value
-                print("sensor notif is,", config._last_sensor_notification)
+                '''print("sensor notif is,", config._last_sensor_notification)'''
                 config._last_sensor_notification_dict = languageStateANDSensorUpdate(config._last_sensor_notification, config._output_file_name)
                 exp.setSensorNotification(config._last_sensor_notification_dict)
 
@@ -1234,7 +1237,7 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
                 # wrong step detect
                 if otherHappen > config._other_happen:
                     # wrong step handling
-                    print("action posterior after bayseian inference is",  exp._action_posterior_prob)
+                    '''print("action posterior after bayseian inference is",  exp._action_posterior_prob)'''
                     exp.handle_exception()
                     
                 # correct step procedure
@@ -1261,7 +1264,7 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
     exp.pendingset_generate()
     # compute goal recognition result PROB and planning result PS
     taskhint = exp.task_prob_calculate(HTNCoachDial_problem.hs.real_output_filename)
-    print("taskhint is", taskhint.__dict__)
+    '''print("taskhint is", taskhint.__dict__)'''
     #output PROB and PS in a file
     exp.print_explaSet()
             
@@ -1282,7 +1285,7 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
     s1_step_index = curr_belief.step_index 
     s2_step_index = s1_step_index+1
     s1_step_name  = HTNCoachDial_problem.env.human_simulator.return_step(s1_step_index) 
-    print("s1 is", s1_step_index, s1_step_name)
+    '''print("s1 is", s1_step_index, s1_step_name)'''
     s2_step_name = None
     sensor_notification = None
     if not HTNCoachDial_problem.env.human_simulator.check_terminal_state(s2_step_index):
@@ -1366,7 +1369,7 @@ def update_belief(HTNCoachDial_problem,action, real_observation, prob_lang, exec
     #     attribute =  key.split("-")[1]
     #     curr_belief.append_object_belief(key, attribute, next_sensor_notification)
 
-    print("s1_step_name ",s1_step_name , "s2_step_name ", s2_step_name  )
+    '''print("s1_step_name ",s1_step_name , "s2_step_name ", s2_step_name  )'''
     if s2_step_name != None:
         
         # if s1_step_name == exp.highest_action_PS[0]:
@@ -1400,6 +1403,8 @@ class HTNCoachDial(pomdp_py.POMDP):
         self.agent_type = args.agent_type
         self.hs = hs
         self.reward_output_filename = None
+        self.reward_csv_filename = None
+        
         # self.hs.read_files()
         # self.hs.goal_selection()
 
@@ -1438,6 +1443,18 @@ class HTNCoachDial(pomdp_py.POMDP):
                                      init_true_state, init_belief)
         HTNCoachDial_problem.agent.set_belief(init_belief, prior=True)
         return HTNCoachDial_problem
+def extract_most_probable_key_value_pair(dict_):
+    '''extract most probable key from the dict'''
+    max_prob_pair = ["",-math.inf]
+
+    for key, val in dict_.items():
+        if val > max_prob_pair[1]:
+            max_prob_pair = [key, val]
+
+    return max_prob_pair
+
+
+
 
 def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=True, discount=0.95, gamma = 1.0, total_reward = 0, total_discounted_reward = 0, i=0, true_state = None, prob_lang = 0.95, num_question_asked=0):
     # planner._db = db
@@ -1462,6 +1479,7 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=True, d
     # action_policy = [Action("wait"),AgentAskClarificationQuestion(),AgentAskClarificationQuestion(),AgentAskClarificationQuestion(),AgentAskClarificationQuestion()]
     print("==== Step %d ====" % (i+1))
 
+    highest_prob_pending_action_pair = None
     if HTNCoachDial_problem.agent_type == "standard":
         # if i == 0:
         #     action = Action("wait")
@@ -1478,8 +1496,20 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=True, d
     elif HTNCoachDial_problem.agent_type == "fixed_always_ask":
         action = AgentAskClarificationQuestion()
     elif HTNCoachDial_problem.agent_type == "random":
-        action = HTNCoachDial_problem.agent.policy_model.sample(HTNCoachDial_problem.agent.cur_belief)
-        
+        # action = HTNCoachDial_problem.agent.policy_model.sample(HTNCoachDial_problem.agent.cur_belief)
+        step_question_dict = {0:AgentAskClarificationQuestion(), 1: Action("wait"), 2: AgentAskClarificationQuestion()}
+        action=step_question_dict[i]
+    elif HTNCoachDial_problem.agent_type == "greedy":
+        current_sensor_observation = config._last_sensor_notification
+        current_prior = HTNCoachDial_problem.agent.cur_belief.htn_explaset.pending_set
+        highest_prob_pending_action_pair = extract_most_probable_key_value_pair(current_prior)
+        action = Action("wait")
+        if highest_prob_pending_action_pair[0] != current_sensor_observation:
+            action = AgentAskClarificationQuestion()
+            
+
+
+
     #random
     # action = choses_action_randomly()
     #fixed policy -always asking question
@@ -1499,7 +1529,7 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=True, d
     ]
     db._backup_sensor.aggregate(pipeline)
     
-    if debug_tree:
+    if debug_tree and HTNCoachDial_problem.agent_type == "standard":
         dd = TreeDebugger(HTNCoachDial_problem.agent.tree)
         # import pdb; pdb.set_trace()
         TreeDebugger(HTNCoachDial_problem.agent.tree).pp
@@ -1516,8 +1546,10 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=True, d
         #         highest_action_PS = [k,v]
         # #TODO: actual epxlaset not updated
         # exp.highest_action_PS = highest_action_PS 
-        
-        highest_action = action.update_question_asked(curr_belief)
+        if highest_prob_pending_action_pair:
+            highest_action = action.update_question_asked(curr_belief,highest_prob_pending_action_pair)
+        else:
+            highest_action = action.update_question_asked(curr_belief)
         curr_belief.htn_explaset.highest_action_PS = highest_action
         num_question_asked+=1
 
@@ -1542,6 +1574,7 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=True, d
         f.write("Question Asked: %s" % str(highest_action) + "\n")
         f.write("Reward: %s" % str(env_reward)+ "\n")
 
+    
     '''Print Statements'''
     # print("True state: %s" % true_state)
     # # print("True state: %s" % HTNCoachDial_problem.env.state)
@@ -1555,7 +1588,8 @@ def planner_one_loop(HTNCoachDial_problem, planner, nsteps=3, debug_tree=True, d
     real_observation = HTNCoachDial_problem.env.provide_observation(HTNCoachDial_problem.agent.observation_model,
                                                               action)
     # real_observation = TigerObservation(HTNCoachDial_problem.env.state.name)
-    print(">> Observation: %s" % real_observation)
+    
+    '''print(">> Observation: %s" % real_observation)'''
     with open(HTNCoachDial_problem.reward_output_filename, 'a') as f:
         f.write("Feedback Recieved: %s" % str(real_observation)+ "\n")
 
