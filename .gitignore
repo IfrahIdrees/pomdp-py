@@ -156,3 +156,4 @@ pomdp_problems/HTN_CoachDial/ssh_folders/*
 pomdp_problems/HTN_CoachDial/old_experiments/*
 pomdp_py/algorithms/po_uct.pyx
 pomdp_problems/HTN_CoachDial/ISRR_05_20_22/
+pomdp_problems/HTN_CoachDial/logs_parallel_runs/

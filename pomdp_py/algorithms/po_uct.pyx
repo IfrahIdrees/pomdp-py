@@ -292,7 +292,7 @@ cdef class POUCT(Planner):
 
 
     cpdef _search(self):
-        print("about to search")
+        '''print("about to search")'''
         cdef State state
         cdef Action best_action
         cdef int sims_count = 0
@@ -329,7 +329,7 @@ cdef class POUCT(Planner):
                 self._db._backup_sensor.aggregate(pipeline)
 
             state = self._agent.sample_belief()
-            print("sampled state from belief is", state)
+            '''print("sampled state from belief is", state)'''
             #print("hello")
             #print("###########")
             with open("random_no.txt", 'a') as file:
@@ -337,7 +337,7 @@ cdef class POUCT(Planner):
                 #f.write("***********starting simualtion#%s**********"+'\n', sims_count)
             with open(self._mcts_output_filename , 'a') as f:
                 f.write('\n#####\n')
-            print(f"Starting simulation number#{sims_count}")
+            '''print(f"Starting simulation number#{sims_count}")'''
             #global state_track_list 
             #state_track_list = []
             #if self._hs.check_terminal_state(state.step_index+1):
@@ -379,11 +379,11 @@ cdef class POUCT(Planner):
     cpdef _simulate(POUCT self,
                     State state, tuple history, VNode root, QNode parent,
                     Observation observation, int depth):
-        print("%%%%%%%%%%%%%%%%%%%%%%%%")
+        '''print("%%%%%%%%%%%%%%%%%%%%%%%%")
         print(f"State: {state},\n Hisotry: {history},\n Root: {root}, Parent: {parent}\n Depth: {depth}\n")
         print(f"Current state.htn.sensor_notif:{state.htn_explaset._sensor_notification}")
         print(f"Observation recieved at current state:{observation}")
-        print("%%%%%%%%%%%%%%%%%%%%%%%%")
+        print("%%%%%%%%%%%%%%%%%%%%%%%%")'''
         #global state_track_list
         #state_track_list.append(state)
 
@@ -403,9 +403,9 @@ cdef class POUCT(Planner):
                 parent[observation] = root
             
             self._expand_vnode(root, history, state=state)
-            print("After expanding:", root)
+            '''print("After expanding:", root)'''
             rollout_reward = self._rollout(state, history, root, depth)
-            print("$$$This is the received rollout reward:", rollout_reward)
+            '''print("$$$This is the received rollout reward:", rollout_reward)'''
             return rollout_reward
         cdef int nsteps
 
@@ -413,7 +413,7 @@ cdef class POUCT(Planner):
 
         
         action = self._ucb(root)
-        print("*****This is the selected action:", action)
+        '''print("*****This is the selected action:", action)'''
         next_state, observation, reward, nsteps = sample_generative_model(self._agent, state, action)
         #print("the nex")
         #print("***********Diff**********\n")
@@ -444,7 +444,7 @@ cdef class POUCT(Planner):
         root.num_visits += 1
         root[action].num_visits += 1
         root[action].value = root[action].value + (total_reward - root[action].value) / (root[action].num_visits)
-        print("$$$$$This is the received cumulative reward:", total_reward)
+        '''print("$$$$$This is the received cumulative reward:", total_reward)'''
         return total_reward
 
     cpdef _rollout(self, State state, tuple history, VNode root, int depth):
@@ -479,7 +479,7 @@ cdef class POUCT(Planner):
             state = next_state
         ## #print("Max depth reached")
         
-        print("***********finished rollout**********")
+        '''print("***********finished rollout**********")'''
         with open("random_no.txt", 'a') as f:
             f.write("***********finished rollout**********\n")
 
