@@ -373,25 +373,25 @@ if __name__ == '__main__':
                 # add config
                 if config.baseline:
                     os.system(
-                        "mongoimport --db smart_homebaseline --collection method --drop --file ../../../../KnowledgeBase/method.json")
+                        "mongoimport --db smart_homebaseline --collection method --drop --file ../../../../KnowledgeBase_block_domain/method.json")
                     os.system(
-                        "mongoimport --db smart_homebaseline --collection state --drop --file ../../../../KnowledgeBase/state.json")
+                        "mongoimport --db smart_homebaseline --collection state --drop --file ../../../../KnowledgeBase_block_domain/state.json")
                     os.system(
-                        "mongoimport --db smart_homebaseline --collection operator --drop --file ../../../../KnowledgeBase/operator.json")
+                        "mongoimport --db smart_homebaseline --collection operator --drop --file ../../../../KnowledgeBase_block_doma/operator.json")
                     os.system(
-                        "mongoimport --db smart_homebaseline --collection Rstate --drop --file ../../../../KnowledgeBase/realState.json")
+                        "mongoimport --db smart_homebaseline --collection Rstate --drop --file ../../../../KnowledgeBase_block_domain/realState.json")
                     # db.backup_state.insertOne({});
                 else:
                     # Some times those command do not work, add "--jsonArray"
                     # to the end of each command line
                     os.system(
-                        "mongoimport --db smart_homegreedy --collection method --drop --file ../../../../KnowledgeBase/method.json")
+                        "mongoimport --db smart_homegreedy --collection method --drop --file ../../../../KnowledgeBase_block_domain/method.json")
                     os.system(
-                        "mongoimport --db smart_homegreedy --collection state --drop --file ../../../../KnowledgeBase/state.json")
+                        "mongoimport --db smart_homegreedy --collection state --drop --file ../../../../KnowledgeBase_block_domain/state.json")
                     os.system(
-                        "mongoimport --db smart_homegreedy --collection operator --drop --file ../../../../KnowledgeBase/operator.json")
+                        "mongoimport --db smart_homegreedy --collection operator --drop --file ../../../../KnowledgeBase_block_domain/operator.json")
                     os.system(
-                        "mongoimport --db smart_homegreedy --collection Rstate --drop --file ../../../../KnowledgeBase/realState.json")
+                        "mongoimport --db smart_homegreedy --collection Rstate --drop --file ../../../../KnowledgeBase_block_domain/realState.json")
                     # db.backup_state.insertOne({});
 
                 # ##Some times those command do not work, add "--jsonArray" to the end of each command line
@@ -403,27 +403,28 @@ if __name__ == '__main__':
                 # command for sensor reliability set up
                 if config.baseline:
                     if x is None:
-                        sensor_command = "mongoimport --db smart_homebaseline --collection sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
-                        # mcts_sensor_command = "mongoimport --db smart_homebaseline --collection mcts_sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
+                        sensor_command = "mongoimport --db smart_homebaseline --collection sensor --drop --file ../../../../KnowledgeBase_block_domain/sensor_reliability/sensor.json"
+                        # mcts_sensor_command = "mongoimport --db smart_homebaseline --collection mcts_sensor --drop --file ../../../../KnowledgeBase_block_domain/sensor_reliability/sensor.json"
                     else:
-                        sensor_command = "mongoimport --db smart_homebaseline --collection sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor" + \
+                        sensor_command = "mongoimport --db smart_homebaseline --collection sensor --drop --file ../../../../KnowledgeBase_block_domain/sensor_reliability/sensor" + \
                             "_" + str(x) + ".json"
-                        # mcts_sensor_command = "mongoimport --db smart_homebaseline --collection mcts_sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor" + "_" + str(x) + ".json"
+                        # mcts_sensor_command = "mongoimport --db smart_homebaseline --collection mcts_sensor --drop --file ../../../../KnowledgeBase_block_domain/sensor_reliability/sensor" + "_" + str(x) + ".json"
 
                 else:
                     if x is None:
-                        sensor_command = "mongoimport --db smart_homegreedy --collection sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
-                        # mcts_sensor_command = "mongoimport --db smart_home3 --collection mcts_sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
+                        sensor_command = "mongoimport --db smart_homegreedy --collection sensor --drop --file ../../../../KnowledgeBase_block_domain/sensor_reliability/sensor.json"
+                        # mcts_sensor_command = "mongoimport --db smart_home3 --collection mcts_sensor --drop --file ../../../../KnowledgeBase_block_domain/sensor_reliability/sensor.json"
                     else:
-                        sensor_command = "mongoimport --db smart_homegreedy --collection sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor" + \
+                        sensor_command = "mongoimport --db smart_homegreedy --collection sensor --drop --file ../../../../KnowledgeBase_block_domain/sensor_reliability/sensor" + \
                             "_" + str(x) + ".json"
-                        # mcts_sensor_command = "mongoimport --db smart_home3 --collection mcts_sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
+                        # mcts_sensor_command = "mongoimport --db smart_home3 --collection mcts_sensor --drop --file ../../../../KnowledgeBase_block_domain/sensor_reliability/sensor.json"
 
                 # if x == None:
                 #     sensor_command = "mongoimport --db smart_home3 --collection sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor.json"
                 # else:
                 #     sensor_command = "mongoimport --db smart_home3 --collection sensor --drop --file ../../../../KnowledgeBase/sensor_reliability/sensor" + "_" + str(x) + ".json"
                 os.system(sensor_command)
+                print(db_client.list_collection_names())
                 # os.system(mcts_sensor_command)
 
                 # command for sensor missing set up
